@@ -41,7 +41,7 @@ export class NewInvoiceDialogComponent implements OnChanges {
 
   get productOptions(): SelectOption[] {
     return this.availableProducts.map((prod) => ({
-      label: `${prod.code} - ${prod.description}`,
+      label: `${prod.code} - ${prod.name || prod.description}`,
       value: prod.id,
       secondaryLabel: `Saldo: ${prod.stockQuantity} un | R$ ${prod.unitPrice.toFixed(2)}`,
     }));
@@ -79,6 +79,7 @@ export class NewInvoiceDialogComponent implements OnChanges {
         const product = this.availableProducts.find(p => p.id === item.productId) || {
           id: item.productId,
           code: item.productCode,
+          name: item.productDescription || item.productCode,
           description: item.productDescription || item.productCode,
           stockQuantity: 999,
           unitPrice: item.unitPrice
@@ -233,7 +234,7 @@ export class NewInvoiceDialogComponent implements OnChanges {
       items: this.draftItems.map(i => ({
         productId: i.productId,
         productCode: i.product.code,
-        productDescription: i.product.description || i.product.name || i.product.code,
+        productDescription: i.product.name || i.product.description || i.product.code,
         quantity: i.quantity,
         unitPrice: i.product.unitPrice
       }))

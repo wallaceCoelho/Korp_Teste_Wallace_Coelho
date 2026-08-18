@@ -8,7 +8,7 @@ import {
 } from "@angular/core";
 import { CommonModule, CurrencyPipe, DatePipe } from "@angular/common";
 import { LucideAngularModule } from "lucide-angular";
-import { Invoice, InvoiceStatus } from "../models/invoice.models";
+import { Invoice, InvoiceItem, InvoiceProductOption, InvoiceStatus } from "../models/invoice.models";
 
 @Component({
   selector: "app-invoice-print-modal",
@@ -21,10 +21,31 @@ export class InvoicePrintModalComponent implements OnChanges {
   @Input() invoice: Invoice | null = null;
   @Input() isDuplicate = false; // 2ª Via indicator
   @Input() autoPrint = false;
+  @Input() products: InvoiceProductOption[] = [];
 
   @Output() close = new EventEmitter<void>();
 
   InvoiceStatus = InvoiceStatus;
+
+  getProductName(item: InvoiceItem): string {
+    if (this.products && this.products.length > 0) {
+      const match = this.products.find(
+        (p) => p.id === item.productId || p.code === item.productCode,
+      );
+      if (match?.name) return match.name;
+    }
+    if (item.productDescription) {
+      if (item.productDescription.length <= 60 && !item.productDescription.includes(".")) {
+        return item.productDescription;
+      }
+      const firstSentence = item.productDescription.split(".")[0].trim();
+      if (firstSentence.length > 0 && firstSentence.length <= 60) {
+        return firstSentence;
+      }
+      return item.productDescription.substring(0, 50).trim() + "...";
+    }
+    return item.productCode;
+  }
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes["isOpen"] && this.isOpen && this.autoPrint && this.canPrint) {
