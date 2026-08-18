@@ -24,7 +24,7 @@ public sealed class InvoiceItemConfiguration : IEntityTypeConfiguration<InvoiceI
 
         builder.Property(i => i.ProductDescription)
             .IsRequired()
-            .HasMaxLength(250);
+            .HasColumnType("text");
 
         builder.Property(i => i.Quantity)
             .IsRequired();
