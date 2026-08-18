@@ -1,0 +1,187 @@
+<div class="overflow-x-auto">
+  <table class="w-full text-left text-xs sm:text-sm text-slate-700 dark:text-slate-300 min-w-[650px]">
+    <thead class="bg-slate-100 text-[11px] sm:text-xs uppercase tracking-wider text-slate-600 border-b border-slate-200 dark:bg-slate-800/80 dark:text-slate-400 dark:border-slate-800">
+      <tr>
+        <th class="px-4 sm:px-5 py-3.5 font-semibold">Número / ID</th>
+        <th class="px-4 sm:px-5 py-3.5 font-semibold">Data Emissão</th>
+        <th class="px-4 sm:px-5 py-3.5 font-semibold">Status</th>
+        <th class="px-4 sm:px-5 py-3.5 font-semibold">Itens</th>
+        <th class="px-4 sm:px-5 py-3.5 font-semibold">Valor Total</th>
+        <th class="px-4 sm:px-5 py-3.5 font-semibold text-right">Ações</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-slate-200 dark:divide-slate-800/60">
+      @for (invoice of invoices; track invoice.id) {
+        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
+          
+          <!-- Número & ID -->
+          <td class="px-4 sm:px-5 py-3.5 whitespace-nowrap">
+            <div class="flex items-center gap-2">
+              <span class="font-mono font-bold text-blue-600 dark:text-blue-400">
+                #{{ (invoice.number || 0).toString().padStart(5, '0') }}
+              </span>
+            </div>
+          </td>
+
+          <!-- Data -->
+          <td class="px-4 sm:px-5 py-3.5 text-slate-700 dark:text-slate-300 whitespace-nowrap">
+            {{ invoice.createdAt | date:'dd/MM/yyyy HH:mm' }}
+          </td>
+
+          <!-- Badges de Status Sincronizados -->
+          <td class="px-4 sm:px-5 py-3.5 whitespace-nowrap">
+            @switch (invoice.status) {
+              @case (InvoiceStatus.Pending) {
+                <app-badge variant="warning">
+                  <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping"></span>
+                  <span>{{ processingActions[invoice.id] || 'Processando' }}</span>
+                </app-badge>
+              }
+              @case (InvoiceStatus.Open) {
+                <app-badge variant="success">
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                  <span>Aberta</span>
+                </app-badge>
+              }
+              @case (InvoiceStatus.Closed) {
+                <app-badge variant="outline">
+                  <span class="w-1.5 h-1.5 rounded-full bg-slate-400 dark:bg-slate-500"></span>
+                  <span>Fechada</span>
+                </app-badge>
+              }
+              @case (InvoiceStatus.Rejected) {
+                <app-badge variant="danger">
+                  <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                  <span>Falha na Abertura</span>
+                </app-badge>
+              }
+              @case (InvoiceStatus.Canceled) {
+                <app-badge variant="outline">
+                  <span class="w-1.5 h-1.5 rounded-full bg-red-600"></span>
+                  <span>Cancelada</span>
+                </app-badge>
+              }
+              @default {
+                <app-badge variant="outline">
+                  <span>{{ invoice.statusDescription || 'Desconhecido' }}</span>
+                </app-badge>
+              }
+            }
+          </td>
+
+          <!-- Itens -->
+          <td class="px-4 sm:px-5 py-3.5 whitespace-nowrap">
+            <span class="font-medium text-slate-900 dark:text-slate-200">
+              {{ invoice.items.length || 0 }} item(ns)
+            </span>
+          </td>
+
+          <!-- Valor Total -->
+          <td class="px-4 sm:px-5 py-3.5 font-bold text-slate-900 dark:text-slate-100 whitespace-nowrap">
+            {{ invoice.totalAmount | currency:'BRL':'symbol':'1.2-2' }}
+          </td>
+
+          <!-- Ações Contextuais -->
+          <td class="px-4 sm:px-5 py-3.5 text-right whitespace-nowrap">
+            <div class="inline-flex items-center justify-end gap-2">
+              
+              <!-- Se Status Aberta (1): Pode Fechar/Imprimir, Visualizar Prévia e Cancelar -->
+              @if (invoice.status === InvoiceStatus.Open) {
+                <button 
+                  type="button" 
+                  [disabled]="processingId === invoice.id || !!processingActions[invoice.id]"
+                  (click)="print.emit(invoice)"
+                  title="Fechar NF e dar baixa definitiva no estoque"
+                  class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-xs transition-all disabled:opacity-40 disabled:cursor-not-allowed">
+                  @if (processingId === invoice.id || !!processingActions[invoice.id]) {
+                    <span class="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                    <span>Fechando NF...</span>
+                  } @else {
+                    <lucide-icon name="printer" class="w-4 h-4"></lucide-icon>
+                    <span>Fechar NF</span>
+                  }
+                </button>
+
+                <button 
+                  type="button" 
+                  (click)="reprint.emit(invoice)"
+                  title="Pré-visualizar template da Nota Fiscal"
+                  class="p-1.5 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-800 transition-colors">
+                  <lucide-icon name="eye" class="w-4 h-4"></lucide-icon>
+                </button>
+
+                <button 
+                  type="button" 
+                  [disabled]="processingId === invoice.id || !!processingActions[invoice.id]"
+                  (click)="cancel.emit(invoice)"
+                  title="Cancelar fatura e devolver estoque reservado"
+                  class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 dark:bg-rose-950/40 dark:hover:bg-rose-900/60 dark:text-rose-400 font-medium text-xs border border-rose-200 dark:border-rose-900/40 transition-all disabled:opacity-40 disabled:cursor-not-allowed">
+                  <lucide-icon name="ban" class="w-3.5 h-3.5"></lucide-icon>
+                  <span>Cancelar</span>
+                </button>
+              }
+
+              <!-- Se Status Rejeitada / Falha (3): Pode Editar/Reenviar e Ver Motivo -->
+              @else if (invoice.status === InvoiceStatus.Rejected) {
+                <button 
+                  type="button" 
+                  [disabled]="processingId === invoice.id"
+                  (click)="edit.emit(invoice)"
+                  title="Editar itens e reenviar fatura"
+                  class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs transition-all disabled:opacity-40 disabled:cursor-not-allowed">
+                  <lucide-icon name="rotate-cw" class="w-3.5 h-3.5"></lucide-icon>
+                  <span>Corrigir & Reenviar</span>
+                </button>
+
+                @if (invoice.reasonRejected) {
+                  <button 
+                    type="button" 
+                    (click)="viewReason.emit(invoice)"
+                    title="Ver detalhes do motivo da falha"
+                    class="p-1.5 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50 dark:text-slate-400 dark:hover:text-rose-400 dark:hover:bg-rose-950/50 transition-colors">
+                    <lucide-icon name="info" class="w-4 h-4"></lucide-icon>
+                  </button>
+                }
+              }
+
+              <!-- Se Status Pendente (5): Processando Assíncrono -->
+              @else if (invoice.status === InvoiceStatus.Pending) {
+                <div class="inline-flex items-center gap-1.5 text-xs text-amber-600 dark:text-amber-400 font-medium px-2.5 py-1 bg-amber-50 dark:bg-amber-950/40 rounded-lg border border-amber-200 dark:border-amber-900/40">
+                  <span class="w-3 h-3 border-2 border-amber-500/30 border-t-amber-500 rounded-full animate-spin"></span>
+                  <span>{{ processingActions[invoice.id] || 'Processando...' }}</span>
+                </div>
+              }
+
+              <!-- Se Status Fechada (2): Disponibiliza 2ª Via / Impressão de NF -->
+              @else if (invoice.status === InvoiceStatus.Closed) {
+                <button 
+                  type="button" 
+                  (click)="reprint.emit(invoice)"
+                  title="Reimprimir 2ª via da nota fiscal (sem mutação no estoque)"
+                  class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-200 font-medium text-xs border border-slate-200 dark:border-slate-700 transition-all shadow-sm">
+                  <lucide-icon name="printer" class="w-3.5 h-3.5 text-slate-500 dark:text-slate-400"></lucide-icon>
+                  <span>2ª Via (NF)</span>
+                </button>
+              }
+
+              <!-- Se Status Cancelada (4) -->
+              @else if (invoice.status === InvoiceStatus.Canceled) {
+                <span class="inline-flex items-center gap-1 text-xs text-slate-400 dark:text-slate-500">
+                  <lucide-icon name="x" class="w-4 h-4"></lucide-icon>
+                  <span>Cancelada</span>
+                </span>
+              }
+
+            </div>
+          </td>
+        </tr>
+      } @empty {
+        <tr>
+          <td colspan="6" class="px-5 py-8 text-center text-slate-500">
+            Nenhuma fatura encontrada com os filtros selecionados.
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>

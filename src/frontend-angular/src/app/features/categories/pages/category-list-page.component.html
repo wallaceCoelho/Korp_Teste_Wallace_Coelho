@@ -1,0 +1,91 @@
+<div class="space-y-6">
+  
+  <!-- Page Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div>
+      <h2 class="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+        Categorias de Produtos
+      </h2>
+      <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+        Organize seu inventário cadastrando e gerenciando categorias de produtos.
+      </p>
+    </div>
+
+    <button 
+      type="button" 
+      (click)="openCreateModal()"
+      class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm transition-all hover:scale-[1.01] active:scale-[0.99]">
+      <lucide-icon name="plus" class="w-4 h-4 shrink-0"></lucide-icon>
+      <span>Nova Categoria</span>
+    </button>
+  </div>
+
+  <!-- Unified Card Container (Filtros + Tabela + Paginação sem gaps) -->
+  <div class="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/50 shadow-xl transition-colors">
+    
+    <!-- Filters & Reactive Search Bar -->
+    <div class="p-4 border-b border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4">
+      <div class="relative flex-1 w-full max-w-full sm:max-w-md">
+        <input 
+          type="text" 
+          [formControl]="searchControl"
+          placeholder="Buscar categoria por nome..." 
+          class="w-full h-11 pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 placeholder-slate-400 dark:bg-slate-950 dark:border-slate-800 dark:text-slate-100 dark:placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-xs sm:text-sm font-medium transition-colors" />
+        <div class="absolute left-3.5 top-3.5 pointer-events-none">
+          <lucide-icon name="search" class="w-4 h-4 text-slate-400 dark:text-slate-500"></lucide-icon>
+        </div>
+      </div>
+    </div>
+
+    <!-- Table or Loading -->
+    @if (isLoading) {
+      <div class="flex items-center justify-center py-16">
+        <div class="w-8 h-8 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin"></div>
+      </div>
+    } @else {
+      <!-- Category Table Component -->
+      <app-category-table 
+        [categories]="paginatedCategories"
+        (edit)="openEditModal($event)"
+        (delete)="onDeleteCategory($event)">
+      </app-category-table>
+
+      <!-- Reusable Pagination Footer Component -->
+      <app-pagination
+        [currentPage]="currentPage"
+        [pageSize]="pageSize"
+        [totalItems]="categories.length"
+        itemName="categoria(s)"
+        activeColorClass="bg-blue-600 text-white font-bold"
+        (pageChange)="onPageChange($event)">
+      </app-pagination>
+    }
+
+  </div>
+
+  <!-- Category Form Modal Component -->
+  <app-category-form-dialog
+    [isOpen]="isModalOpen"
+    [categoryToEdit]="selectedCategory"
+    [isSubmitting]="isSubmitting"
+    (saveCreate)="onCreateCategory($event)"
+    (saveUpdate)="onUpdateCategory($event)"
+    (close)="closeModal()">
+  </app-category-form-dialog>
+
+  <!-- Modal de Confirmação de Exclusão de Categoria -->
+  <app-confirm-dialog
+    [isOpen]="isConfirmDeleteOpen"
+    title="Excluir Categoria"
+    [message]="'Deseja realmente excluir a categoria \'' + (categoryToDelete?.name || '') + '\'?'"
+    detailMessage="Esta ação não poderá ser desfeita e removerá o vínculo da categoria com o catálogo."
+    confirmText="Excluir Categoria"
+    cancelText="Cancelar"
+    variant="danger"
+    icon="trash-2"
+    [isLoading]="isDeleting"
+    (confirm)="onConfirmDeleteCategory()"
+    (cancel)="onCancelDeleteCategory()">
+  </app-confirm-dialog>
+
+</div>

@@ -1,0 +1,14 @@
+{
+  "profiles": {
+    "DEV": {
+      "commandName": "Project",
+      "launchBrowser": false,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "OTEL_EXPORTER_OTLP_ENDPOINT": "http://localhost:4317",
+        "OTEL_SERVICE_NAME": "api-gateway"
+      },
+      "applicationUrl": "http://localhost:5050"
+    }
+  }
+}

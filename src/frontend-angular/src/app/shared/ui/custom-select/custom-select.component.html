@@ -1,0 +1,115 @@
+<div class="relative w-full text-left select-none" [class.opacity-60]="disabled" [class.pointer-events-none]="disabled">
+  
+  <!-- Trigger Button -->
+  <button
+    type="button"
+    (click)="toggleDropdown()"
+    [disabled]="disabled"
+    [ngClass]="{
+      'border-blue-500 ring-1 ring-blue-500/30': isOpen && accentColor === 'blue',
+      'border-emerald-500 ring-1 ring-emerald-500/30': isOpen && accentColor === 'emerald',
+      'border-slate-300 dark:border-slate-800': !isOpen
+    }"
+    class="w-full h-11 px-3.5 flex items-center justify-between rounded-xl bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 text-xs sm:text-sm font-medium border transition-all duration-150 focus:outline-none cursor-pointer">
+    
+    <div class="flex items-center gap-2.5 min-w-0 overflow-hidden pr-2">
+      <!-- Left Icon -->
+      @if (icon) {
+        <lucide-icon [name]="icon" class="w-4 h-4 shrink-0 text-slate-400 dark:text-slate-500"></lucide-icon>
+      }
+
+      <!-- Selected Label or Placeholder -->
+      <span class="truncate" [title]="selectedOption ? selectedOption.label : placeholder" [class.text-slate-400]="!selectedOption" [class.dark:text-slate-500]="!selectedOption">
+        {{ selectedOption ? selectedOption.label : placeholder }}
+      </span>
+    </div>
+
+    <!-- Actions / Right Icons (Clear button + Chevron) -->
+    <div class="flex items-center gap-1.5 shrink-0 text-slate-400 dark:text-slate-500">
+      
+      <!-- Clear button (X) when allowClear is enabled and a value is selected that is not default/ALL -->
+      @if (allowClear && canClear) {
+        <span
+          role="button"
+          tabindex="0"
+          (click)="clearSelection($event)"
+          (keydown.enter)="clearSelection($event)"
+          title="Limpar seleção"
+          class="p-0.5 rounded-md hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors cursor-pointer">
+          <lucide-icon name="x" class="w-3.5 h-3.5"></lucide-icon>
+        </span>
+      }
+
+      <!-- Chevron (Rotates when open) -->
+      <lucide-icon 
+        name="chevron-down" 
+        class="w-4 h-4 transition-transform duration-200" 
+        [class.rotate-180]="isOpen">
+      </lucide-icon>
+    </div>
+  </button>
+
+  <!-- Dropdown Menu / Popup List -->
+  @if (isOpen) {
+    <div 
+      class="absolute z-[100] left-0 right-0 top-full mt-1.5 min-w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl overflow-hidden p-1.5 transition-all">
+      
+      <!-- Optional Search Box (If options > 7 or explicitly searchable) -->
+      @if (shouldShowSearch) {
+        <div class="p-1 pb-1.5 border-b border-slate-100 dark:border-slate-800/80 mb-1">
+          <div class="relative">
+            <input
+              type="text"
+              [(ngModel)]="searchQuery"
+              (click)="$event.stopPropagation()"
+              placeholder="Filtrar opções..."
+              class="w-full h-8 pl-7 pr-2 text-xs rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 placeholder-slate-400 focus:outline-none focus:border-blue-500 transition-colors" />
+            <div class="absolute left-2 top-2 pointer-events-none text-slate-400">
+              <lucide-icon name="search" class="w-3.5 h-3.5"></lucide-icon>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- Options List (Limited to ~6 items with max-h-[240px] and smooth custom scroll) -->
+      <div class="max-h-[240px] overflow-y-auto overflow-x-hidden space-y-0.5 pr-0.5 custom-select-scroll">
+        @for (opt of filteredOptions(); track opt.value; let idx = $index) {
+          <div
+            (click)="selectOption(opt, $event)"
+            [title]="opt.label"
+            [class.opacity-40]="opt.disabled"
+            [class.pointer-events-none]="opt.disabled"
+            [ngClass]="{
+              'bg-blue-50 text-blue-600 dark:bg-blue-500/15 dark:text-blue-400 font-semibold': isSelected(opt) && accentColor === 'blue',
+              'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-400 font-semibold': isSelected(opt) && accentColor === 'emerald',
+              'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/80': !isSelected(opt)
+            }"
+            class="group w-full px-3 py-2 rounded-lg text-xs sm:text-sm flex items-center justify-between transition-colors cursor-pointer text-left">
+            
+            <div class="flex items-center gap-2 min-w-0 pr-2">
+              @if (opt.icon) {
+                <lucide-icon [name]="opt.icon" class="w-3.5 h-3.5 shrink-0 opacity-70"></lucide-icon>
+              }
+              <span class="truncate">{{ opt.label }}</span>
+            </div>
+
+            <div class="flex items-center gap-2 shrink-0">
+              @if (opt.secondaryLabel) {
+                <span class="text-[11px] text-slate-400 dark:text-slate-500 font-mono">{{ opt.secondaryLabel }}</span>
+              }
+              @if (isSelected(opt)) {
+                <lucide-icon name="check" class="w-4 h-4 shrink-0 text-current"></lucide-icon>
+              }
+            </div>
+          </div>
+        } @empty {
+          <div class="py-4 text-center text-xs text-slate-400 dark:text-slate-500">
+            Nenhuma opção encontrada
+          </div>
+        }
+      </div>
+
+    </div>
+  }
+
+</div>

@@ -1,0 +1,36 @@
+@if (isVisible) {
+  <div 
+    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 dark:bg-slate-950/80 backdrop-blur-md transition-opacity duration-300 ease-in-out"
+    [ngClass]="{
+      'opacity-100 pointer-events-auto': isAnimatingIn,
+      'opacity-0 pointer-events-none': !isAnimatingIn
+    }"
+    (click)="onBackdropClick()">
+    <div 
+      class="relative w-full max-w-lg bg-white border border-slate-200 text-slate-900 dark:bg-slate-900 dark:border-slate-800 dark:text-slate-100 rounded-2xl shadow-2xl overflow-hidden p-6 transform transition-all duration-300 ease-out"
+      [ngClass]="{
+        'scale-100 opacity-100 translate-y-0': isAnimatingIn,
+        'scale-95 opacity-0 -translate-y-4': !isAnimatingIn
+      }"
+      (click)="$event.stopPropagation()">
+      
+      <!-- Header -->
+      <div class="flex items-center justify-between pb-4 mb-4 border-b border-slate-200 dark:border-slate-800">
+        <h3 class="text-xl font-bold tracking-tight bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400 bg-clip-text text-transparent">
+          {{ title }}
+        </h3>
+        <button 
+          type="button" 
+          (click)="close.emit()"
+          class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-slate-100 dark:hover:bg-slate-800 transition-colors">
+          <lucide-icon name="x" class="w-4 h-4"></lucide-icon>
+        </button>
+      </div>
+
+      <!-- Body -->
+      <div class="space-y-4">
+        <ng-content></ng-content>
+      </div>
+    </div>
+  </div>
+}

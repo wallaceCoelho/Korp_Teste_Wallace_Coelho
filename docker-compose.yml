@@ -1,0 +1,140 @@
+services:
+  # =========================================================================
+  # 1. Observability (OpenTelemetry / Aspire Dashboard)
+  # =========================================================================
+  aspire-dashboard:
+    image: mcr.microsoft.com/dotnet/aspire-dashboard:latest
+    container_name: aspire-dashboard
+    restart: unless-stopped
+    environment:
+      - DOTNET_DASHBOARD_UNSECURED_ALLOW_ANONYMOUS=true
+      - Dashboard__Frontend__AuthMode=Unsecured
+    ports:
+      - "18888:18888"
+      - "4317:18889"
+
+  # =========================================================================
+  # 2. Database Unificado (PostgreSQL 17)
+  # =========================================================================
+  postgres:
+    image: postgres:17-alpine
+    container_name: postgres-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres/init-databases.sql:/docker-entrypoint-initdb.d/init-databases.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # =========================================================================
+  # 3. Message Broker (RabbitMQ)
+  # =========================================================================
+  rabbitmq:
+    image: rabbitmq:4-management-alpine
+    container_name: rabbitmq
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # =========================================================================
+  # 4. Backend Microservices (.NET 10)
+  # =========================================================================
+
+  # Inventory API Microservice
+  api-inventory:
+    build:
+      context: ./src/api-inventory
+      dockerfile: Dockerfile
+    container_name: api-inventory
+    restart: unless-stopped
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=inventory_db;Username=postgres;Password=postgres
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://aspire-dashboard:18889
+      - OTEL_SERVICE_NAME=api-inventory
+    ports:
+      - "5000:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      aspire-dashboard:
+        condition: service_started
+
+  # Invoicing API Microservice
+  api-invoicing:
+    build:
+      context: ./src/api-invoicing
+      dockerfile: Dockerfile
+    container_name: api-invoicing
+    restart: unless-stopped
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=invoicing_db;Username=postgres;Password=postgres
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://aspire-dashboard:18889
+      - OTEL_SERVICE_NAME=api-invoicing
+    ports:
+      - "5001:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      aspire-dashboard:
+        condition: service_started
+
+  # =========================================================================
+  # 5. API Gateway (.NET 10 YARP Reverse Proxy)
+  # =========================================================================
+  api-gateway:
+    build:
+      context: ./src/api-gateway
+      dockerfile: Dockerfile
+    container_name: api-gateway
+    restart: unless-stopped
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ReverseProxy__Clusters__products-cluster__Destinations__destination1__Address=http://api-inventory:8080
+      - ReverseProxy__Clusters__invoices-cluster__Destinations__destination1__Address=http://api-invoicing:8080
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://aspire-dashboard:18889
+      - OTEL_SERVICE_NAME=api-gateway
+    ports:
+      - "5050:8080"
+    depends_on:
+      - api-inventory
+      - api-invoicing
+      - aspire-dashboard
+
+  # =========================================================================
+  # 6. Frontend Application (Angular Nginx Build)
+  # =========================================================================
+  frontend-angular:
+    build:
+      context: ./src/frontend-angular
+      dockerfile: Dockerfile
+    container_name: frontend-angular
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    depends_on:
+      - api-gateway
+
+# =============================================================================
+# Volumes
+# =============================================================================
+volumes:
+  postgres_data:

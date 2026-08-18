@@ -1,0 +1,108 @@
+<div class="overflow-x-auto">
+  <table class="w-full text-left text-xs sm:text-sm text-slate-700 dark:text-slate-300 min-w-[600px]">
+    <thead class="bg-slate-100 text-[11px] sm:text-xs uppercase tracking-wider text-slate-600 border-b border-slate-200 dark:bg-slate-800/80 dark:text-slate-400 dark:border-slate-800">
+      <tr>
+        <th class="px-4 sm:px-5 py-3.5 font-semibold">Código</th>
+        <th class="px-4 sm:px-5 py-3.5 font-semibold">Nome / Descrição</th>
+        <th class="px-4 sm:px-5 py-3.5 font-semibold">Preço Unitário</th>
+        <th class="px-4 sm:px-5 py-3.5 font-semibold text-center">Estoque Físico</th>
+        <th class="px-4 sm:px-5 py-3.5 font-semibold text-center">Estoque Disponível</th>
+        <th class="px-4 sm:px-5 py-3.5 font-semibold text-right">Ações</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-slate-200 dark:divide-slate-800/60">
+      @for (product of products; track product.id) {
+        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
+          <!-- Código -->
+          <td class="px-4 sm:px-5 py-3.5 font-mono font-bold text-blue-600 dark:text-blue-400 whitespace-nowrap">
+            {{ product.code }}
+          </td>
+
+          <!-- Nome / Descrição -->
+          <td class="px-4 sm:px-5 py-3.5">
+            <div class="font-bold text-slate-900 dark:text-slate-100">
+              {{ product.name || product.description }}
+            </div>
+            @if (product.name && product.description) {
+              <div class="text-xs text-slate-500 dark:text-slate-400 font-normal line-clamp-1">
+                {{ product.description }}
+              </div>
+            }
+            @if (product.category) {
+              <span class="inline-block mt-0.5 text-[10px] font-semibold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 px-2 py-0.5 rounded border border-blue-200 dark:border-blue-500/20">
+                {{ product.category.name }}
+              </span>
+            }
+          </td>
+
+          <!-- Preço Unitário -->
+          <td class="px-4 sm:px-5 py-3.5 font-semibold text-slate-900 dark:text-slate-100 whitespace-nowrap">
+            {{ product.unitPrice | currency:'BRL':'symbol':'1.2-2' }}
+          </td>
+
+          <!-- Estoque Físico -->
+          <td class="px-4 sm:px-5 py-3.5 text-center font-semibold whitespace-nowrap">
+            {{ product.stockQuantity }} un
+            @if (product.minStockQuantity) {
+              <span class="block text-[10px] text-slate-400 font-normal">Mín: {{ product.minStockQuantity }} un</span>
+            }
+          </td>
+
+          <!-- Estoque Disponível -->
+          <td class="px-4 sm:px-5 py-3.5 text-center whitespace-nowrap">
+            @if (product.stockQuantity <= 0) {
+              <app-badge variant="danger">
+                <lucide-icon name="x-circle" class="w-3.5 h-3.5"></lucide-icon>
+                <span>Zerado (0)</span>
+              </app-badge>
+            } @else if (product.minStockQuantity && product.stockQuantity <= product.minStockQuantity) {
+              <app-badge variant="warning">
+                <lucide-icon name="alert-triangle" class="w-3.5 h-3.5"></lucide-icon>
+                <span>Crítico ({{ product.stockQuantity }})</span>
+              </app-badge>
+            } @else {
+              <app-badge variant="success">
+                <lucide-icon name="check-circle-2" class="w-3.5 h-3.5"></lucide-icon>
+                <span>{{ product.stockQuantity }} un</span>
+              </app-badge>
+            }
+          </td>
+
+          <!-- Ações -->
+          <td class="px-4 sm:px-5 py-3.5 text-right whitespace-nowrap">
+            <div class="flex items-center justify-end gap-1.5">
+              <button 
+                type="button" 
+                (click)="stockEntry.emit(product)"
+                title="Dar entrada ou ajustar estoque físico"
+                class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-400 dark:hover:bg-emerald-500/20 border border-emerald-200 dark:border-emerald-500/30 transition-colors text-xs font-semibold shadow-sm">
+                <lucide-icon name="package-plus" class="w-3.5 h-3.5"></lucide-icon>
+                <span class="hidden sm:inline">+ Estoque</span>
+              </button>
+              <button 
+                type="button" 
+                (click)="edit.emit(product)"
+                class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 dark:bg-blue-500/10 dark:text-blue-400 dark:hover:bg-blue-500/20 border border-blue-200 dark:border-blue-500/30 transition-colors text-xs font-semibold">
+                <lucide-icon name="pencil" class="w-3.5 h-3.5"></lucide-icon>
+                <span class="hidden sm:inline">Editar</span>
+              </button>
+              <button 
+                type="button" 
+                (click)="delete.emit(product.id)"
+                class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 dark:bg-rose-500/10 dark:text-rose-400 dark:hover:bg-rose-500/20 border border-rose-200 dark:border-rose-500/30 transition-colors text-xs font-semibold">
+                <lucide-icon name="trash-2" class="w-3.5 h-3.5"></lucide-icon>
+                <span class="hidden sm:inline">Excluir</span>
+              </button>
+            </div>
+          </td>
+        </tr>
+      } @empty {
+        <tr>
+          <td colspan="6" class="px-5 py-8 text-center text-slate-500">
+            Nenhum produto cadastrado ou encontrado.
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>

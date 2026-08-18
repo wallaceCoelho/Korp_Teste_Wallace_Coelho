@@ -1,0 +1,233 @@
+<div class="space-y-6">
+  
+  <!-- Page Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div>
+      <h2 class="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+        Faturas & NF's
+      </h2>
+      <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+        Emita notas fiscais, verifique o status da reserva de estoque em tempo real, cancele ou reenvie faturas com falha.
+      </p>
+    </div>
+
+    <button 
+      type="button" 
+      (click)="openCreateModal()"
+      class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm transition-all hover:scale-[1.01] active:scale-[0.99]">
+      <lucide-icon name="plus" class="w-4 h-4 shrink-0"></lucide-icon>
+      <span>Gerar Nova Fatura</span>
+    </button>
+  </div>
+
+  <!-- Unified Card Container (Filtros + Tabela + Paginação sem gaps) -->
+  <div class="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/50 shadow-xl transition-colors">
+    
+    <!-- Filters & Search Bar for Invoices -->
+    <div class="p-4 border-b border-slate-200 dark:border-slate-800 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3 lg:gap-4">
+      
+      <!-- Reactive Text Search -->
+      <div class="relative flex-1 w-full max-w-full lg:max-w-md">
+        <input 
+          type="text" 
+          [formControl]="searchControl"
+          placeholder="Buscar fatura por número ou produto..." 
+          class="w-full h-11 pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 placeholder-slate-400 dark:bg-slate-950 dark:border-slate-800 dark:text-slate-100 dark:placeholder-slate-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 text-xs sm:text-sm font-medium transition-colors" />
+        <div class="absolute left-3.5 top-3.5 pointer-events-none">
+          <lucide-icon name="search" class="w-4 h-4 text-slate-400 dark:text-slate-500"></lucide-icon>
+        </div>
+      </div>
+
+      <!-- Filters Group: Categoria + Status -->
+      <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto">
+        
+        <!-- Category Filter Dropdown -->
+        <div class="w-full sm:w-56 flex-1 sm:flex-initial">
+          <app-custom-select
+            [options]="categoryOptions"
+            [formControl]="categoryFilterControl"
+            (valueChange)="applyLocalFilters()"
+            icon="tag"
+            placeholder="Todas as Categorias"
+            accentColor="emerald">
+          </app-custom-select>
+        </div>
+
+        <!-- Status Selector Filter Dropdown -->
+        <div class="w-full sm:w-56 flex-1 sm:flex-initial">
+          <app-custom-select
+            [options]="statusOptions"
+            [formControl]="statusFilterControl"
+            (valueChange)="applyLocalFilters()"
+            icon="filter"
+            placeholder="Todos os Status"
+            accentColor="emerald">
+          </app-custom-select>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- Table or Loading -->
+    @if (isLoading) {
+      <div class="flex items-center justify-center py-16">
+        <div class="w-8 h-8 border-4 border-emerald-500/30 border-t-emerald-500 rounded-full animate-spin"></div>
+      </div>
+    } @else {
+      <!-- Invoices Table Component -->
+      <app-invoice-table 
+        [invoices]="paginatedInvoices"
+        [processingId]="processingInvoiceId"
+        [processingActions]="processingActions"
+        (print)="onPrintInvoice($event)"
+        (cancel)="onCancelInvoice($event)"
+        (edit)="onEditInvoice($event)"
+        (viewReason)="onViewReason($event)"
+        (reprint)="onReprintInvoice($event)">
+      </app-invoice-table>
+
+      <!-- Reusable Pagination Footer Component -->
+      <app-pagination
+        [currentPage]="currentPage"
+        [pageSize]="pageSize"
+        [totalItems]="filteredInvoices.length"
+        itemName="fatura(s)"
+        activeColorClass="bg-emerald-600 text-white font-bold"
+        (pageChange)="onPageChange($event)">
+      </app-pagination>
+    }
+
+  </div>
+
+  <!-- New / Edit Invoice Dialog Component -->
+  <app-new-invoice-dialog
+    [isOpen]="isModalOpen"
+    [availableProducts]="availableProducts"
+    [invoiceToEdit]="invoiceToEdit"
+    [isSubmitting]="isSubmitting"
+    (create)="onCreateInvoice($event)"
+    (update)="onUpdateInvoice($event)"
+    (close)="closeModal()">
+  </app-new-invoice-dialog>
+
+  <!-- Modal de Visualização Inteligente do Motivo da Falha / Rejeição -->
+  @if (isReasonModalOpen && selectedReasonInvoice) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn">
+      <div class="w-full max-w-lg bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden space-y-4 p-6">
+        
+        <!-- Header -->
+        <div class="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
+          <div class="flex items-center gap-2.5">
+            <div class="p-2 rounded-xl bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400">
+              <lucide-icon name="alert-triangle" class="w-5 h-5"></lucide-icon>
+            </div>
+            <div>
+              <h3 class="text-base font-bold text-slate-900 dark:text-slate-100">
+                Detalhes da Falha na Reserva
+              </h3>
+              <p class="text-xs text-slate-500 dark:text-slate-400 font-mono">
+                Fatura #{{ (selectedReasonInvoice.number || 0).toString().padStart(5, '0') }}
+              </p>
+            </div>
+          </div>
+
+          <button 
+            type="button" 
+            (click)="closeReasonModal()"
+            class="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
+            <lucide-icon name="x" class="w-5 h-5"></lucide-icon>
+          </button>
+        </div>
+
+        <!-- Box de Diagnóstico -->
+        <div class="p-4 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 space-y-2">
+          <span class="text-xs font-bold uppercase tracking-wider text-rose-700 dark:text-rose-400">
+            Mensagem de Diagnóstico do Inventário:
+          </span>
+          <p class="text-sm font-medium text-rose-900 dark:text-rose-200 leading-relaxed">
+            {{ selectedReasonInvoice.reasonRejected || 'Motivo não especificado pelo serviço de inventário.' }}
+          </p>
+        </div>
+
+        <!-- Resumo dos Itens Solicitados na Fatura -->
+        <div class="space-y-2">
+          <span class="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+            Itens Solicitados nesta Fatura:
+          </span>
+          <div class="max-h-40 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800 rounded-xl border border-slate-200 dark:border-slate-800 p-2">
+            @for (item of selectedReasonInvoice.items; track item.id) {
+              <div class="py-2 flex items-center justify-between text-xs">
+                <div>
+                  <strong class="font-mono text-blue-600 dark:text-blue-400">{{ item.productCode }}</strong>
+                  <span class="text-slate-700 dark:text-slate-300 ml-2">{{ item.productDescription }}</span>
+                </div>
+                <div class="text-right">
+                  <span class="font-semibold text-slate-900 dark:text-slate-100">{{ item.quantity }} un</span>
+                  <span class="text-slate-400 ml-1">× {{ item.unitPrice | currency:'BRL' }}</span>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- Footer Actions -->
+        <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-200 dark:border-slate-800">
+          <button 
+            type="button" 
+            (click)="closeReasonModal()"
+            class="px-4 py-2 rounded-xl text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 text-xs font-semibold transition-colors">
+            Fechar
+          </button>
+
+          <button 
+            type="button" 
+            (click)="onEditFromReasonModal()"
+            class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold transition-all">
+            <lucide-icon name="rotate-cw" class="w-4 h-4"></lucide-icon>
+            <span>Corrigir e Reenviar Agora</span>
+          </button>
+        </div>
+
+      </div>
+    </div>
+  }
+
+  <!-- Modal de Template de Impressão de Nota Fiscal (DANFE Simples & 2ª Via) -->
+  <app-invoice-print-modal
+    [isOpen]="isPrintModalOpen"
+    [invoice]="invoiceToPrint"
+    [isDuplicate]="isDuplicatePrint"
+    [autoPrint]="isAutoPrint"
+    (close)="closePrintModal()">
+  </app-invoice-print-modal>
+
+  <!-- Modal de Confirmação de Fechamento de Fatura -->
+  <app-confirm-dialog
+    [isOpen]="isConfirmCloseOpen"
+    title="Fechar Nota Fiscal"
+    [message]="'Deseja realmente fechar a fatura #' + ((invoiceToClose?.number || 0).toString().padStart(5, '0')) + '?'"
+    detailMessage="Esta ação confirmará a venda e efetuará a baixa definitiva dos itens no estoque físico."
+    confirmText="Confirmar Fechamento"
+    cancelText="Voltar"
+    variant="success"
+    icon="printer"
+    (confirm)="onConfirmCloseInvoice()"
+    (cancel)="onCancelCloseInvoice()">
+  </app-confirm-dialog>
+
+  <!-- Modal de Confirmação de Cancelamento de Fatura -->
+  <app-confirm-dialog
+    [isOpen]="isConfirmCancelOpen"
+    title="Cancelar Fatura"
+    [message]="'Deseja realmente cancelar a fatura #' + ((invoiceToCancel?.number || 0).toString().padStart(5, '0')) + '?'"
+    detailMessage="Esta ação cancelará a fatura e liberará imediatamente todos os itens reservados de volta para o estoque disponível."
+    confirmText="Sim, Cancelar Fatura"
+    cancelText="Voltar"
+    variant="danger"
+    icon="ban"
+    (confirm)="onConfirmCancelInvoice()"
+    (cancel)="onCancelCancelInvoice()">
+  </app-confirm-dialog>
+
+</div>

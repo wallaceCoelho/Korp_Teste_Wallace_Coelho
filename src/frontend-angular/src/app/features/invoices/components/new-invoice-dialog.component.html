@@ -1,0 +1,239 @@
+<app-drawer 
+  [isOpen]="isOpen" 
+  [title]="isEditMode ? 'Editar e Reenviar Fatura #' + (invoiceToEdit?.number || 0).toString().padStart(5, '0') : 'Gerar Nova Fatura de Venda'"
+  [subtitle]="isEditMode ? 'Ajuste os itens ou quantidades e reenvie para processamento de reserva de estoque' : 'Selecione o produto, informe a quantidade e adicione aos itens da fatura'"
+  (close)="onClose()">
+  
+  <div class="space-y-6">
+
+    <!-- Banner de Motivo da Falha / Rejeição (Apenas no Modo Edição com Erro) -->
+    @if (isEditMode && invoiceToEdit?.reasonRejected) {
+      <div class="p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 shadow-sm space-y-1">
+        <div class="flex items-center gap-2 text-rose-700 dark:text-rose-400 text-xs font-bold uppercase tracking-wider">
+          <lucide-icon name="alert-circle" class="w-4 h-4 shrink-0 text-rose-600 dark:text-rose-400"></lucide-icon>
+          <span>Motivo da Falha na Tentativa Anterior:</span>
+        </div>
+        <p class="text-xs text-rose-800 dark:text-rose-300 pl-6 font-medium leading-relaxed">
+          {{ invoiceToEdit?.reasonRejected }}
+        </p>
+      </div>
+    }
+    
+    <!-- Seção 1: Formulário Fixo de Inclusão/Edição de Item (Topo) -->
+    <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 dark:bg-slate-950/80 dark:border-slate-800 space-y-4 shadow-sm transition-colors">
+      <div class="flex items-center justify-between">
+        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-2">
+          <lucide-icon [name]="editingTempId ? 'pencil' : 'plus'" class="w-4 h-4 text-emerald-600 dark:text-emerald-400"></lucide-icon>
+          <span>{{ editingTempId ? 'Editar Item da Fatura' : 'Adicionar Item à Fatura' }}</span>
+        </h4>
+
+        @if (editingTempId) {
+          <button 
+            type="button" 
+            (click)="cancelEditing()"
+            class="text-xs text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 font-medium">
+            Cancelar Edição
+          </button>
+        }
+      </div>
+
+      <form [formGroup]="itemForm" (ngSubmit)="onAddOrUpdateItem()" class="space-y-3">
+        
+        <!-- Seleção de Produto -->
+        <div>
+          <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
+            Selecione o Produto *
+          </label>
+          <app-custom-select
+            formControlName="productId"
+            [options]="productOptions"
+            (valueChange)="onProductChange()"
+            icon="package"
+            placeholder="Escolha um produto do estoque..."
+            accentColor="emerald">
+          </app-custom-select>
+        </div>
+
+        <!-- Feedback de Saldo em Tempo Real -->
+        @if (selectedProduct) {
+          <div class="flex items-center justify-between p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs">
+            <span class="text-slate-500 dark:text-slate-400">Preço Unitário: <strong class="text-slate-900 dark:text-slate-100 font-mono">{{ selectedProduct.unitPrice | currency:'BRL' }}</strong></span>
+            
+            <app-badge [variant]="selectedProduct.stockQuantity > 0 ? 'success' : 'danger'">
+              Saldo Físico: {{ selectedProduct.stockQuantity }} un
+            </app-badge>
+          </div>
+        }
+
+        <!-- Quantidade Solicitada & Subtotal -->
+        <div class="grid grid-cols-2 gap-3 items-end">
+          <div>
+            <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
+              Quantidade *
+            </label>
+            <input 
+              type="number" 
+              min="1"
+              formControlName="quantity"
+              placeholder="1"
+              class="w-full px-3 py-2 rounded-xl bg-white border border-slate-300 text-slate-900 dark:bg-slate-900 dark:border-slate-800 dark:text-slate-100 focus:outline-none focus:border-emerald-500 text-xs transition-colors" />
+          </div>
+
+          <div class="text-right pb-1">
+            <span class="block text-[10px] text-slate-400 uppercase tracking-wider">Subtotal:</span>
+            <span class="text-sm font-bold font-mono text-emerald-600 dark:text-emerald-400">
+              {{ currentSubtotal | currency:'BRL':'symbol':'1.2-2' }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Alerta de Estoque Excedido -->
+        @if (isStockExceeded) {
+          <div class="p-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 text-xs text-rose-600 dark:text-rose-400 font-medium flex items-center gap-2">
+            <lucide-icon name="alert-triangle" class="w-4 h-4 shrink-0 text-rose-500"></lucide-icon>
+            <span>A quantidade solicitada ({{ itemForm.get('quantity')?.value }}) excede o saldo físico disponível ({{ selectedProduct?.stockQuantity }} un).</span>
+          </div>
+        }
+
+        <!-- Botão de Inclusão no Formulário Fixo -->
+        <button 
+          type="submit" 
+          [disabled]="itemForm.invalid || isStockExceeded || !selectedProduct"
+          class="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs transition-all flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed">
+          <lucide-icon [name]="editingTempId ? 'check' : 'plus'" class="w-4 h-4"></lucide-icon>
+          <span>{{ editingTempId ? 'Salvar Alteração no Item' : 'Adicionar Item à Fatura' }}</span>
+        </button>
+
+      </form>
+    </div>
+
+    <!-- Seção 2: Lista de Itens Adicionados (Abaixo do Form, Antes do Total) -->
+    <div class="space-y-3">
+      <div class="flex items-center justify-between">
+        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-2">
+          <lucide-icon name="receipt" class="w-4 h-4 text-emerald-600 dark:text-emerald-400"></lucide-icon>
+          <span>Itens Incluídos na Fatura ({{ draftItems.length }})</span>
+        </h4>
+      </div>
+
+      <div class="divide-y divide-slate-200 dark:divide-slate-800 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden shadow-sm">
+        @for (item of draftItems; track item.tempId) {
+          <div 
+            class="p-3.5 flex items-center justify-between gap-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
+            [ngClass]="{ 'bg-blue-50/50 dark:bg-blue-950/30': editingTempId === item.tempId }">
+            
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2">
+                <span class="font-mono font-bold text-xs text-blue-600 dark:text-blue-400">{{ item.product.code }}</span>
+                <span class="text-xs font-semibold text-slate-900 dark:text-slate-100 truncate">{{ item.product.description }}</span>
+              </div>
+
+              <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 flex items-center gap-3">
+                <span>Qtd: <strong class="text-slate-800 dark:text-slate-200 font-semibold">{{ item.quantity }} un</strong></span>
+                <span>•</span>
+                <span>Unit: {{ item.product.unitPrice | currency:'BRL' }}</span>
+              </div>
+            </div>
+
+            <!-- Controle de Quantidade Inline -->
+            <div class="flex items-center gap-1 bg-slate-100 dark:bg-slate-800/80 p-1 rounded-xl border border-slate-200 dark:border-slate-700/60 shrink-0">
+              <button 
+                type="button" 
+                (click)="decrementQuantity(item.tempId)"
+                [disabled]="item.quantity <= 1"
+                title="Diminuir quantidade"
+                class="w-6 h-6 flex items-center justify-center rounded-lg bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-600 disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-xs font-bold shadow-xs">
+                -
+              </button>
+
+              <input 
+                type="number" 
+                min="1"
+                [max]="item.product.stockQuantity || 9999"
+                [value]="item.quantity"
+                (change)="updateItemQuantity(item.tempId, $any($event.target).value)"
+                (input)="updateItemQuantity(item.tempId, $any($event.target).value)"
+                title="Quantidade solicitada"
+                class="w-10 text-center py-0.5 bg-transparent border-0 text-slate-900 dark:text-slate-100 font-bold text-xs focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
+
+              <button 
+                type="button" 
+                (click)="incrementQuantity(item.tempId)"
+                [disabled]="item.quantity >= (item.product.stockQuantity || 9999)"
+                title="Aumentar quantidade"
+                class="w-6 h-6 flex items-center justify-center rounded-lg bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-600 disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-xs font-bold shadow-xs">
+                +
+              </button>
+            </div>
+
+            <!-- Subtotal & Ações (Editar / Remover) -->
+            <div class="flex items-center gap-3 shrink-0">
+              <span class="text-sm font-bold font-mono text-emerald-600 dark:text-emerald-400">
+                {{ item.subtotal | currency:'BRL':'symbol':'1.2-2' }}
+              </span>
+
+              <div class="flex items-center gap-1">
+                <!-- Botão Editar Item no Form Superior -->
+                <button 
+                  type="button" 
+                  (click)="startEditingItem(item)"
+                  title="Carregar item no formulário superior"
+                  class="p-1.5 rounded-lg text-slate-500 hover:text-blue-600 hover:bg-blue-50 dark:text-slate-400 dark:hover:text-blue-400 dark:hover:bg-blue-950/50 transition-colors">
+                  <lucide-icon name="pencil" class="w-4 h-4"></lucide-icon>
+                </button>
+
+                <!-- Botão Remover Item -->
+                <button 
+                  type="button" 
+                  (click)="removeDraftItem(item.tempId)"
+                  title="Remover este item da fatura"
+                  class="p-1.5 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50 dark:text-slate-400 dark:hover:text-rose-400 dark:hover:bg-rose-950/50 transition-colors">
+                  <lucide-icon name="trash-2" class="w-4 h-4"></lucide-icon>
+                </button>
+              </div>
+            </div>
+
+          </div>
+        } @empty {
+          <div class="p-8 text-center text-slate-400 text-xs">
+            Nenhum item adicionado à fatura. Preencha o formulário acima e clique em "Adicionar Item".
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Seção 3: Resumo do Valor Total e Ação Final -->
+    <div class="p-4 rounded-xl bg-emerald-50 border border-emerald-200 dark:bg-emerald-950/30 dark:border-emerald-500/30 space-y-2">
+      <div class="flex justify-between items-center text-xs text-slate-600 dark:text-slate-400">
+        <span>Total de Itens na Lista:</span>
+        <strong class="font-mono text-slate-900 dark:text-slate-100">{{ draftItems.length }} item(ns)</strong>
+      </div>
+
+      <div class="flex justify-between items-center pt-2 border-t border-emerald-200 dark:border-emerald-900/50">
+        <span class="text-sm font-bold text-emerald-800 dark:text-emerald-300">Valor Total da Fatura:</span>
+        <span class="text-xl font-bold font-mono text-emerald-600 dark:text-emerald-400">
+          {{ grandTotal | currency:'BRL':'symbol':'1.2-2' }}
+        </span>
+      </div>
+    </div>
+
+    <!-- Footer Action Buttons -->
+    <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
+      <button 
+        type="button" 
+        (click)="onClose()"
+        class="px-4 py-2.5 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-800 transition-colors text-sm font-medium">
+        Cancelar
+      </button>
+
+      <button 
+        type="button" 
+        (click)="onFinalSubmit()"
+        [disabled]="draftItems.length === 0 || isSubmitting"
+        class="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm transition-all disabled:opacity-40 disabled:cursor-not-allowed">
+        {{ isSubmitting ? (isEditMode ? 'Reenviando...' : 'Gerando Fatura...') : (isEditMode ? 'Reenviar Fatura (' + draftItems.length + ' Itens)' : 'Gerar Fatura (' + draftItems.length + ' Itens)') }}
+      </button>
+    </div>
+
+  </div>
+</app-drawer>

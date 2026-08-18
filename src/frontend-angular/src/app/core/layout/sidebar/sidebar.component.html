@@ -1,0 +1,171 @@
+<!-- Mobile Backdrop Overlay (only visible on mobile when sidebar is open) -->
+<div 
+  *ngIf="isMobileOpen"
+  (click)="closeMobile.emit()"
+  class="md:hidden fixed inset-0 z-40 bg-slate-950/60 dark:bg-slate-950/80 backdrop-blur-sm transition-opacity duration-300">
+</div>
+
+<aside 
+  class="h-screen fixed md:sticky top-0 left-0 bg-white border-r border-slate-200 dark:bg-slate-900 dark:border-slate-800 transition-all duration-300 flex flex-col z-50 transform md:transform-none"
+  [ngClass]="{
+    'translate-x-0': isMobileOpen,
+    '-translate-x-full md:translate-x-0': !isMobileOpen,
+    'w-64': !isCollapsed,
+    'w-20': isCollapsed
+  }">
+  
+  <!-- Sidebar Header -->
+  <div class="h-16 flex items-center justify-between px-4 border-b border-slate-200 dark:border-slate-800 shrink-0">
+    <div class="flex items-center gap-3" *ngIf="!isCollapsed">
+      <div class="flex items-center justify-center font-bold shrink-0">
+        <lucide-icon name="layers" class="w-7 h-7 text-blue-600 dark:text-blue-400 shrink-0"></lucide-icon>
+      </div>
+      <div class="flex flex-col min-w-0">
+        <span class="font-bold text-sm tracking-tight text-slate-900 dark:text-slate-100 truncate">
+          Produtos & Faturamento
+        </span>
+        <span class="text-[10px] text-slate-500 dark:text-slate-400 font-medium uppercase tracking-wider">NF's Manager</span>
+      </div>
+    </div>
+
+    <div class="flex items-center justify-center font-bold mx-auto shrink-0" *ngIf="isCollapsed">
+      <lucide-icon name="layers" class="w-7 h-7 text-blue-600 dark:text-blue-400 shrink-0"></lucide-icon>
+    </div>
+
+    <button 
+      type="button" 
+      (click)="toggleCollapse.emit()"
+      [ngClass]="{
+        'ms-1.5': !isCollapsed,
+        'ms-2 -me-2': isCollapsed
+      }"
+      class="hidden md:flex w-7 h-7 mx-4 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-300 items-center justify-center transition-colors font-bold shrink-0"
+      [title]="isCollapsed ? 'Expandir Menu' : 'Recolher Menu'">
+      @if (isCollapsed) {
+        <lucide-icon name="chevron-right" class="w-4 h-4"></lucide-icon>
+      } @else {
+        <lucide-icon name="chevron-left" class="w-4 h-4"></lucide-icon>
+      }
+    </button>
+
+    <button 
+      type="button" 
+      (click)="closeMobile.emit()"
+      class="md:hidden w-8 h-8 rounded-lg text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100 flex items-center justify-center">
+      <lucide-icon name="x" class="w-5 h-5"></lucide-icon>
+    </button>
+  </div>
+
+  <!-- Navigation -->
+  <nav class="flex-1 p-3 space-y-1.5" [ngClass]="{ 'overflow-y-auto': !isCollapsed, 'overflow-visible': isCollapsed }">
+    
+    <!-- Item com Dropdown: Inventário -->
+    <div class="relative group">
+      <button 
+        type="button"
+        (click)="toggleInventoryDropdown()"
+        class="w-full flex items-center justify-between px-3 py-3 rounded-xl border border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-800/60 transition-all"
+        [ngClass]="{ 'bg-slate-100 dark:bg-slate-800/40 text-slate-900 dark:text-slate-100 font-semibold': isInventoryActive }"
+        [title]="isCollapsed ? 'Inventário' : ''">
+        
+        <div class="flex items-center gap-3">
+          <lucide-icon name="folder-tree" class="w-5 h-5 group-hover:scale-110 transition-transform text-blue-600 dark:text-blue-400 shrink-0"></lucide-icon>
+          <span class="text-sm font-medium whitespace-nowrap" *ngIf="!isCollapsed">
+            Inventário
+          </span>
+        </div>
+
+        <div *ngIf="!isCollapsed">
+          @if (isInventoryOpen) {
+            <lucide-icon name="chevron-up" class="w-4 h-4 text-slate-400"></lucide-icon>
+          } @else {
+            <lucide-icon name="chevron-down" class="w-4 h-4 text-slate-400"></lucide-icon>
+          }
+        </div>
+      </button>
+
+      <!-- Submenu Normal (Sidebar Aberta) -->
+      <div *ngIf="isInventoryOpen && !isCollapsed" class="pl-4 pr-1 space-y-1 transition-all mt-1">
+        <a 
+          routerLink="/products" 
+          (click)="onNavItemClick()"
+          routerLinkActive="bg-blue-50 text-blue-600 border-blue-200 dark:bg-blue-600/15 dark:text-blue-400 dark:border-blue-500/30 font-semibold"
+          class="flex items-center gap-2.5 px-3 py-2.5 rounded-lg border border-transparent text-xs text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-800/60 transition-all">
+          <lucide-icon name="package" class="w-4 h-4 shrink-0"></lucide-icon>
+          <span>Produtos</span>
+        </a>
+
+        <a 
+          routerLink="/categories" 
+          (click)="onNavItemClick()"
+          routerLinkActive="bg-blue-50 text-blue-600 border-blue-200 dark:bg-blue-600/15 dark:text-blue-400 dark:border-blue-500/30 font-semibold"
+          class="flex items-center gap-2.5 px-3 py-2.5 rounded-lg border border-transparent text-xs text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-800/60 transition-all">
+          <lucide-icon name="tag" class="w-4 h-4 shrink-0"></lucide-icon>
+          <span>Categorias</span>
+        </a>
+      </div>
+
+      <!-- Menu Flutuante / Flyout (Sidebar COLLAPSADA) -->
+      @if (isCollapsed) {
+        <div 
+          [ngClass]="{ 'flex': isCollapsedInventoryOpen, 'hidden group-hover:flex': !isCollapsedInventoryOpen }"
+          class="absolute left-full top-0 ml-2 flex-col z-50 min-w-[190px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-2 space-y-1 animate-fadeIn">
+          
+          <div class="px-3 py-2 border-b border-slate-100 dark:border-slate-800 flex items-center gap-2">
+            <lucide-icon name="folder-tree" class="w-4 h-4 text-blue-600 dark:text-blue-400"></lucide-icon>
+            <span class="text-xs font-bold text-slate-900 dark:text-slate-100">Inventário</span>
+          </div>
+
+          <a 
+            routerLink="/products" 
+            (click)="onNavItemClick()"
+            routerLinkActive="bg-blue-50 text-blue-600 dark:bg-blue-600/15 dark:text-blue-400 font-semibold"
+            class="flex items-center gap-2.5 px-3 py-2.5 rounded-xl border border-transparent text-xs text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 transition-colors">
+            <lucide-icon name="package" class="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0"></lucide-icon>
+            <span>Produtos</span>
+          </a>
+
+          <a 
+            routerLink="/categories" 
+            (click)="onNavItemClick()"
+            routerLinkActive="bg-blue-50 text-blue-600 dark:bg-blue-600/15 dark:text-blue-400 font-semibold"
+            class="flex items-center gap-2.5 px-3 py-2.5 rounded-xl border border-transparent text-xs text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 transition-colors">
+            <lucide-icon name="tag" class="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0"></lucide-icon>
+            <span>Categorias</span>
+          </a>
+        </div>
+      }
+
+    </div>
+
+    <!-- Item Simples: Notas Fiscais -->
+    <div class="relative group">
+      <a 
+        routerLink="/invoices" 
+        (click)="onNavItemClick()"
+        routerLinkActive="bg-blue-50 text-blue-600 border-blue-200 dark:bg-blue-600/15 dark:text-blue-400 dark:border-blue-500/30 font-semibold"
+        [routerLinkActiveOptions]="{ exact: false }"
+        class="flex items-center gap-3 px-3 py-3 rounded-xl border border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-800/60 transition-all group"
+        [title]="isCollapsed ? 'Notas Fiscais' : ''">
+        <lucide-icon name="receipt" class="w-5 h-5 group-hover:scale-110 transition-transform text-blue-600 dark:text-blue-400 shrink-0"></lucide-icon>
+        <span class="text-sm font-medium whitespace-nowrap" *ngIf="!isCollapsed">
+          Notas Fiscais
+        </span>
+      </a>
+
+      <!-- Tooltip Flutuante (Sidebar COLLAPSADA) -->
+      @if (isCollapsed) {
+        <div class="absolute left-full top-1/2 -translate-y-1/2 ml-2 hidden group-hover:flex items-center z-50 whitespace-nowrap bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 text-xs font-semibold px-3 py-2 rounded-xl shadow-xl border border-slate-200 dark:border-slate-800 pointer-events-none">
+          Notas Fiscais
+        </div>
+      }
+    </div>
+
+  </nav>
+
+  <!-- Sidebar Footer -->
+  <div class="p-4 border-t border-slate-200 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400 shrink-0" *ngIf="!isCollapsed">
+    <p class="font-medium text-slate-700 dark:text-slate-300">Faturamento</p>
+    <p class="text-[11px] truncate opacity-75">http://localhost:5000</p>
+  </div>
+</aside>

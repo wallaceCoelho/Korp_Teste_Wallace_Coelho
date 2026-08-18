@@ -1,0 +1,9 @@
+using Domain.Messaging;
+
+namespace Application.Features.Products.Integration.Producers.Events;
+
+public sealed record InventoryConfirmedEvent(Guid InvoiceId) : IIntegrationEvent
+{
+    public Guid Id { get; init; } = Guid.NewGuid();
+    public DateTime OccurredOn { get; init; } = DateTime.UtcNow;
+}

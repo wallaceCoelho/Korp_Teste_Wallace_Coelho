@@ -1,0 +1,145 @@
+@if (isOpen && product) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn">
+    <div class="w-full max-w-md bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden space-y-4 p-6">
+      
+      <!-- Header -->
+      <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+        <div class="flex items-center gap-2.5">
+          <div class="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+            <lucide-icon name="package-plus" class="w-5 h-5"></lucide-icon>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-slate-900 dark:text-slate-100">
+              Entrada / Movimentação de Estoque
+            </h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400">
+              Abasteça ou ajuste o saldo físico do inventário
+            </p>
+          </div>
+        </div>
+
+        <button 
+          type="button" 
+          (click)="onClose()"
+          class="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+          <lucide-icon name="x" class="w-5 h-5"></lucide-icon>
+        </button>
+      </div>
+
+      <!-- Info do Produto -->
+      <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 space-y-1.5 text-xs">
+        <div class="flex items-center justify-between">
+          <span class="font-mono font-bold text-blue-600 dark:text-blue-400">{{ product.code }}</span>
+          <span class="px-2 py-0.5 rounded-md font-semibold text-[11px] bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+            Saldo Atual: {{ product.stockQuantity }} un
+          </span>
+        </div>
+        <div class="font-semibold text-slate-900 dark:text-slate-100 line-clamp-1">
+          {{ product.name || product.description }}
+        </div>
+      </div>
+
+      <!-- Form de Movimentação -->
+      <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-4 text-xs">
+        
+        <!-- Tipo de Operação -->
+        <div class="space-y-1.5">
+          <span class="block font-semibold text-slate-700 dark:text-slate-300">Tipo de Operação</span>
+          <div class="grid grid-cols-2 gap-2">
+            <button 
+              type="button"
+              (click)="form.patchValue({ operationType: 'ADD' })"
+              class="flex items-center justify-center gap-2 p-2.5 rounded-xl border transition-all text-xs font-semibold"
+              [ngClass]="form.get('operationType')?.value === 'ADD' ? 'bg-emerald-50 border-emerald-500 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400' : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400'">
+              <lucide-icon name="arrow-down-circle" class="w-4 h-4"></lucide-icon>
+              <span>Entrada (+ Adicionar)</span>
+            </button>
+
+            <button 
+              type="button"
+              (click)="form.patchValue({ operationType: 'SUBTRACT' })"
+              class="flex items-center justify-center gap-2 p-2.5 rounded-xl border transition-all text-xs font-semibold"
+              [ngClass]="form.get('operationType')?.value === 'SUBTRACT' ? 'bg-rose-50 border-rose-500 text-rose-700 dark:bg-rose-500/10 dark:text-rose-400' : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400'">
+              <lucide-icon name="arrow-up-circle" class="w-4 h-4"></lucide-icon>
+              <span>Saída (- Ajuste)</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Quantidade -->
+        <div class="space-y-1.5">
+          <div class="flex justify-between items-center">
+            <span class="font-semibold text-slate-700 dark:text-slate-300">Quantidade</span>
+            <!-- Quick Chips -->
+            <div class="flex gap-1">
+              <button 
+                type="button" 
+                (click)="form.patchValue({ quantity: 10 })"
+                class="px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 font-mono text-[10px] text-slate-600 dark:text-slate-300">
+                +10
+              </button>
+              <button 
+                type="button" 
+                (click)="form.patchValue({ quantity: 50 })"
+                class="px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 font-mono text-[10px] text-slate-600 dark:text-slate-300">
+                +50
+              </button>
+              <button 
+                type="button" 
+                (click)="form.patchValue({ quantity: 100 })"
+                class="px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 font-mono text-[10px] text-slate-600 dark:text-slate-300">
+                +100
+              </button>
+            </div>
+          </div>
+
+          <input 
+            type="number" 
+            formControlName="quantity" 
+            min="1" 
+            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 font-mono text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none transition-all">
+        </div>
+
+        <!-- Simulação do Novo Saldo -->
+        <div class="p-3 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 flex items-center justify-between text-xs">
+          <span class="text-slate-600 dark:text-slate-400">Novo Saldo Projetado:</span>
+          <div class="flex items-center gap-1.5">
+            <span class="font-mono text-slate-500">{{ currentStock }}</span>
+            <span class="font-mono font-bold" [class.text-emerald-600]="quantityChange > 0" [class.text-rose-600]="quantityChange < 0">
+              {{ quantityChange > 0 ? '+' : '' }}{{ quantityChange }}
+            </span>
+            <span class="font-mono text-slate-400">=</span>
+            <strong class="font-mono text-sm" [class.text-emerald-600]="projectedStock > 0" [class.text-rose-600]="projectedStock <= 0">
+              {{ projectedStock }} un
+            </strong>
+          </div>
+        </div>
+
+        <!-- Footer Actions -->
+        <div class="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100 dark:border-slate-800">
+          <button 
+            type="button" 
+            (click)="onClose()"
+            class="px-4 py-2.5 rounded-xl text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 font-semibold transition-colors">
+            Cancelar
+          </button>
+
+          <button 
+            type="submit" 
+            [disabled]="form.invalid || isSubmitting || projectedStock < 0"
+            class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+            @if (isSubmitting) {
+              <span class="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+              <span>Salvando...</span>
+            } @else {
+              <lucide-icon name="check" class="w-4 h-4"></lucide-icon>
+              <span>Confirmar Movimentação</span>
+            }
+          </button>
+        </div>
+
+      </form>
+
+    </div>
+  </div>
+}

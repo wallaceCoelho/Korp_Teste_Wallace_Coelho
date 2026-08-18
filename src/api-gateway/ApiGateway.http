@@ -1,0 +1,15 @@
+@Host = http://localhost:5050
+
+### Health Check
+GET {{Host}}/health
+Accept: application/json
+
+### Proxy to Products Service
+GET {{Host}}/api/products
+Authorization: Bearer <your_jwt_token_here>
+Accept: application/json
+
+### Proxy to Invoicing Service
+GET {{Host}}/api/invoices
+Authorization: Bearer <your_jwt_token_here>
+Accept: application/json

@@ -1,0 +1,53 @@
+<div class="p-4 bg-white border-t border-slate-200 dark:bg-slate-900 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4 transition-colors">
+  
+  <!-- Left: Indicator of page range & total items -->
+  <div class="text-xs text-slate-500 dark:text-slate-400 font-medium">
+    @if (totalItems === 0) {
+      Nenhum {{ itemName }} encontrado.
+    } @else {
+      Exibindo <strong class="text-slate-800 dark:text-slate-200 font-semibold">{{ startIndex }}</strong> a <strong class="text-slate-800 dark:text-slate-200 font-semibold">{{ endIndex }}</strong> de <strong class="text-slate-900 dark:text-slate-100 font-bold">{{ totalItems }}</strong> {{ itemName }}
+    }
+  </div>
+
+  <!-- Right: Pagination Controls -->
+  @if (totalPages > 1) {
+    <div class="flex items-center gap-1 sm:gap-1.5">
+      <!-- Previous Button -->
+      <button 
+        type="button" 
+        [disabled]="currentPage === 1"
+        (click)="prevPage()"
+        class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+        <lucide-icon name="chevron-left" class="w-3.5 h-3.5"></lucide-icon>
+        <span class="hidden sm:inline">Anterior</span>
+      </button>
+
+      <!-- Page Numbers -->
+      @for (page of pages; track $index) {
+        @if (page === '...') {
+          <span class="px-2 py-1 text-xs text-slate-400 font-bold">...</span>
+        } @else {
+          <button 
+            type="button" 
+            (click)="goToPage(page)"
+            [ngClass]="page === currentPage 
+              ? activeColorClass 
+              : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 font-medium'"
+            class="min-w-8 h-8 px-2 rounded-lg text-xs flex items-center justify-center transition-all">
+            {{ page }}
+          </button>
+        }
+      }
+
+      <!-- Next Button -->
+      <button 
+        type="button" 
+        [disabled]="currentPage === totalPages"
+        (click)="nextPage()"
+        class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+        <span class="hidden sm:inline">Próximo</span>
+        <lucide-icon name="chevron-right" class="w-3.5 h-3.5"></lucide-icon>
+      </button>
+    </div>
+  }
+</div>

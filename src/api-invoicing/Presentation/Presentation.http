@@ -1,0 +1,25 @@
+@Host = http://localhost:5001
+
+GET {{Host}}/
+Accept: application/json
+
+### List Invoices
+GET {{Host}}/api/invoices
+Accept: application/json
+
+### Create Invoice
+POST {{Host}}/api/invoices
+Content-Type: application/json
+
+{
+  "items": [
+    {
+      "productId": "00000000-0000-0000-0000-000000000000",
+      "quantity": 2
+    }
+  ]
+}
+
+### Print Invoice
+POST {{Host}}/api/invoices/00000000-0000-0000-0000-000000000000/print
+Accept: application/json

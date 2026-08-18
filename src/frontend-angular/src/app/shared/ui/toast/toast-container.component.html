@@ -1,0 +1,38 @@
+<div class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 max-w-md w-full pointer-events-none px-4">
+  @for (toast of notificationService.toasts$ | async; track toast.id) {
+    <div 
+      class="pointer-events-auto flex items-start justify-between gap-3 p-4 rounded-xl shadow-2xl border transition-all duration-300 transform translate-y-0 opacity-100 backdrop-blur-md"
+      [ngClass]="{
+        'bg-emerald-950/90 border-emerald-500/40 text-emerald-100': toast.type === 'success',
+        'bg-rose-950/90 border-rose-500/40 text-rose-100': toast.type === 'error',
+        'bg-amber-950/90 border-amber-500/40 text-amber-100': toast.type === 'warning',
+        'bg-sky-950/90 border-sky-500/40 text-sky-100': toast.type === 'info'
+      }">
+      
+      <div class="flex items-start gap-3">
+        <div class="mt-0.5 shrink-0">
+          @if (toast.type === 'success') {
+            <lucide-icon name="check-circle-2" class="w-5 h-5 text-emerald-400"></lucide-icon>
+          } @else if (toast.type === 'error') {
+            <lucide-icon name="x-circle" class="w-5 h-5 text-rose-400"></lucide-icon>
+          } @else if (toast.type === 'warning') {
+            <lucide-icon name="alert-triangle" class="w-5 h-5 text-amber-400"></lucide-icon>
+          } @else {
+            <lucide-icon name="info" class="w-5 h-5 text-sky-400"></lucide-icon>
+          }
+        </div>
+        <div>
+          <h4 class="font-semibold text-sm leading-snug">{{ toast.title }}</h4>
+          <p class="text-xs opacity-90 mt-0.5 leading-relaxed">{{ toast.message }}</p>
+        </div>
+      </div>
+
+      <button 
+        type="button"
+        (click)="notificationService.remove(toast.id)"
+        class="text-xs opacity-60 hover:opacity-100 transition-opacity p-1 rounded hover:bg-white/10 shrink-0">
+        <lucide-icon name="x" class="w-4 h-4"></lucide-icon>
+      </button>
+    </div>
+  }
+</div>

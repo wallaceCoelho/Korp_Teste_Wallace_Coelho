@@ -1,0 +1,18 @@
+# Visual Studio / Rider
+.vs/
+.idea/
+*.user
+*.suo
+
+# Build & Binários .NET
+**/bin/
+**/obj/
+
+# Node / Angular
+**/node_modules/
+**/dist/
+.angular/
+
+# Logs e arquivos de ambiente local
+*.log
+.env

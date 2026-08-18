@@ -1,0 +1,238 @@
+@if (isOpen && invoice) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-900/70 backdrop-blur-sm overflow-y-auto animate-fadeIn">
+    
+    <!-- Modal Container -->
+    <div class="relative w-full max-w-3xl bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 my-8 overflow-hidden flex flex-col">
+      
+      <!-- Top Action Toolbar (Oculto na Impressão) -->
+      <div class="no-print p-4 bg-slate-100 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <lucide-icon [name]="canPrint ? 'printer' : 'eye'" class="w-5 h-5" [ngClass]="canPrint ? 'text-emerald-600 dark:text-emerald-400' : 'text-blue-600 dark:text-blue-400'"></lucide-icon>
+          <span class="font-bold text-sm text-slate-800 dark:text-slate-200">
+            @if (canPrint) {
+              {{ isDuplicate ? 'Reimpressão de Nota Fiscal (2ª Via)' : 'Visualização de Impressão da Nota Fiscal' }}
+            } @else {
+              Pré-visualização da Nota Fiscal (Fatura Aberta)
+            }
+          </span>
+          @if (isDuplicate) {
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-300 dark:border-amber-700">
+              2ª VIA
+            </span>
+          } @else if (!canPrint) {
+            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-300 dark:border-blue-700">
+              EM ABERTO / PRÉVIA
+            </span>
+          }
+        </div>
+
+        <div class="flex items-center gap-2">
+          @if (canPrint) {
+            <button 
+              type="button" 
+              (click)="downloadDocument()"
+              title="Baixar cópia offline da Nota Fiscal"
+              class="p-2 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-200 dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-700 transition-colors">
+              <lucide-icon name="download" class="w-4 h-4"></lucide-icon>
+            </button>
+
+            <button 
+              type="button" 
+              (click)="triggerPrint()"
+              class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs transition-all hover:scale-[1.01] active:scale-[0.99]">
+              <lucide-icon name="printer" class="w-4 h-4"></lucide-icon>
+              <span>Imprimir / Salvar PDF</span>
+            </button>
+          }
+
+          <button 
+            type="button" 
+            (click)="onClose()"
+            class="p-2 rounded-xl text-slate-500 hover:text-slate-800 hover:bg-slate-200 dark:text-slate-400 dark:hover:text-slate-100 dark:hover:bg-slate-700 transition-colors">
+            <lucide-icon name="x" class="w-5 h-5"></lucide-icon>
+          </button>
+        </div>
+      </div>
+
+      <!-- Área Exclusiva do Documento da NF -->
+      <div id="invoice-print-sheet" class="p-6 sm:p-10 bg-white text-slate-900 font-sans space-y-6">
+        
+        <!-- Cabeçalho Fiscal -->
+        <div class="border-b-2 border-slate-900 pb-4 space-y-2">
+          <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+            <div>
+              <h1 class="text-lg sm:text-xl font-black tracking-tight text-slate-950 uppercase">
+                Enterprise Commerce & Inventário S.A.
+              </h1>
+              <p class="text-xs text-slate-600 mt-0.5">
+                CNPJ: 12.345.678/0001-90 | Inscrição Estadual: 123.456.789.000
+              </p>
+              <p class="text-xs text-slate-600">
+                Av. Principal dos Negócios, 1000 - Centro Empresarial - São Paulo / SP
+              </p>
+            </div>
+
+            <!-- Box Identificador da NF -->
+            <div class="text-left sm:text-right border sm:border-0 p-3 sm:p-0 rounded-xl bg-slate-50 sm:bg-transparent border-slate-200 shrink-0">
+              <div class="inline-block bg-slate-950 text-white px-3 py-1 rounded-md text-xs font-mono font-bold uppercase tracking-wider">
+                {{ canPrint ? 'DANFE SIMPLIFICADO' : 'PRÉ-VISUALIZAÇÃO DE NF-e' }}
+              </div>
+              <div class="text-xl font-black font-mono text-slate-950 mt-1">
+                NF-e Nº {{ formattedNumber }}
+              </div>
+              <div class="text-[11px] text-slate-500 font-mono">
+                SÉRIE: 001 • FOLHA: 1/1
+              </div>
+            </div>
+          </div>
+
+          <!-- Chave de Acesso -->
+          <div class="pt-2 border-t border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between text-[11px] font-mono text-slate-600 gap-1">
+            <span>CHAVE DE ACESSO: <strong>{{ accessKey }}</strong></span>
+            <span>PROTOCOLO SAGA: <strong>{{ invoice.id }}</strong></span>
+          </div>
+        </div>
+
+        <!-- Dados do Destinatário & Emissão -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 p-3.5 rounded-xl border border-slate-300 bg-slate-50 text-xs">
+          <div class="space-y-1">
+            <span class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Destinatário / Consumidor</span>
+            <div class="font-bold text-slate-900">CONSUMIDOR FINAL / VENDA DIRETA</div>
+            <div class="text-slate-600">CPF/CNPJ: Não Informado</div>
+            <div class="text-slate-600">Endereço: Venda Presencial / Balcão</div>
+          </div>
+
+          <div class="space-y-1 sm:text-right">
+            <span class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Datas & Controle Fiscal</span>
+            <div>Data de Emissão: <strong>{{ invoice.createdAt | date:'dd/MM/yyyy HH:mm:ss' }}</strong></div>
+            <div>Data de Impressão: <strong>{{ (invoice.printedAt || invoice.updatedAt || invoice.createdAt) | date:'dd/MM/yyyy HH:mm:ss' }}</strong></div>
+            <div>
+              Status Fiscal: 
+              @if (invoice.status === InvoiceStatus.Closed) {
+                <strong class="text-emerald-700 uppercase">Estoque Baixado / Concluída</strong>
+              } @else if (invoice.status === InvoiceStatus.Open) {
+                <strong class="text-blue-700 uppercase">Estoque Reservado / Aberta (Aguardando Fechamento)</strong>
+              } @else {
+                <strong class="text-slate-700 uppercase">{{ invoice.statusDescription }}</strong>
+              }
+            </div>
+          </div>
+        </div>
+
+        <!-- Tabela de Produtos / Serviços -->
+        <div class="space-y-2">
+          <h2 class="text-xs font-bold uppercase tracking-wider text-slate-800">
+            Detalhamento dos Itens da Nota Fiscal
+          </h2>
+
+          <div class="border border-slate-300 rounded-xl overflow-hidden">
+            <table class="w-full text-left text-xs border-collapse">
+              <thead class="bg-slate-200 text-[11px] uppercase font-bold text-slate-800 border-b border-slate-300">
+                <tr>
+                  <th class="py-2 px-3 w-12 text-center">Item</th>
+                  <th class="py-2 px-3 w-28">Código</th>
+                  <th class="py-2 px-3">Descrição do Produto</th>
+                  <th class="py-2 px-3 text-center w-16">Qtd</th>
+                  <th class="py-2 px-3 text-right w-28">V. Unitário</th>
+                  <th class="py-2 px-3 text-right w-28">V. Total</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-200">
+                @for (item of invoice.items; track item.id; let idx = $index) {
+                  <tr class="hover:bg-slate-50">
+                    <td class="py-2 px-3 text-center font-mono text-slate-500">{{ idx + 1 }}</td>
+                    <td class="py-2 px-3 font-mono font-semibold text-slate-900">{{ item.productCode }}</td>
+                    <td class="py-2 px-3 font-medium text-slate-800">{{ item.productDescription || item.productCode }}</td>
+                    <td class="py-2 px-3 text-center font-bold text-slate-900">{{ item.quantity }} un</td>
+                    <td class="py-2 px-3 text-right font-mono text-slate-700">{{ item.unitPrice | currency:'BRL':'symbol':'1.2-2' }}</td>
+                    <td class="py-2 px-3 text-right font-mono font-bold text-slate-950">{{ item.totalPrice | currency:'BRL':'symbol':'1.2-2' }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Quadro de Totais e Resumo Financeiro -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
+          
+          <!-- Carimbo de Autenticação / 2ª Via -->
+          <div class="p-3.5 rounded-xl border-2 border-dashed border-slate-300 text-center space-y-1">
+            <div class="text-[10px] uppercase font-bold text-slate-500">
+              {{ canPrint ? 'Chave de Autenticação Digital' : 'Controle Provisório' }}
+            </div>
+            <div class="text-xs font-mono font-bold text-slate-800">
+              @if (canPrint) {
+                AUT-{{ invoice.id.substring(0, 18).toUpperCase() }}
+              } @else {
+                PREVIA-{{ invoice.id.substring(0, 14).toUpperCase() }}
+              }
+            </div>
+            <div class="text-[10px] text-slate-500">
+              {{ canPrint ? 'Consulta de autenticidade via QR Code / Portal Gateway' : 'Documento sem valor fiscal até o fechamento da NF' }}
+            </div>
+          </div>
+
+          <!-- Totalizadores -->
+          <div class="p-4 rounded-xl bg-slate-100 border border-slate-300 space-y-2 text-xs">
+            <div class="flex justify-between text-slate-600">
+              <span>Total de Itens:</span>
+              <strong class="font-mono text-slate-900">{{ invoice.items.length }} produto(s)</strong>
+            </div>
+            <div class="flex justify-between text-slate-600">
+              <span>Subtotal dos Produtos:</span>
+              <strong class="font-mono text-slate-900">{{ invoice.totalAmount | currency:'BRL':'symbol':'1.2-2' }}</strong>
+            </div>
+            <div class="flex justify-between text-slate-600">
+              <span>Descontos / Isenções:</span>
+              <strong class="font-mono text-slate-900">R$ 0,00</strong>
+            </div>
+            <div class="flex justify-between items-center pt-2 border-t-2 border-slate-900 text-sm font-black text-slate-950">
+              <span class="uppercase">Valor Total da NF:</span>
+              <span class="text-lg font-mono text-emerald-700">
+                {{ invoice.totalAmount | currency:'BRL':'symbol':'1.2-2' }}
+              </span>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Rodapé Fiscal -->
+        <div class="pt-4 border-t border-slate-200 text-center text-[10px] text-slate-500 space-y-0.5">
+          <p>Documento Auxiliar de Venda e Controle Interno de Movimentação de Estoque.</p>
+          <p>Emitido eletronicamente pelo Sistema Integrado de Microserviços (Invoicing & Inventory Gateway).</p>
+        </div>
+
+      </div>
+
+      <!-- Modal Footer (Oculto na Impressão) -->
+      <div class="no-print p-4 bg-slate-50 dark:bg-slate-800/80 border-t border-slate-200 dark:border-slate-700 flex items-center justify-end gap-3">
+        <button 
+          type="button" 
+          (click)="onClose()"
+          class="px-5 py-2.5 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-200 dark:text-slate-400 dark:hover:text-slate-100 dark:hover:bg-slate-700 text-xs font-semibold transition-colors">
+          Fechar
+        </button>
+
+        @if (canPrint) {
+          <button 
+            type="button" 
+            (click)="downloadDocument()"
+            class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-800 dark:bg-slate-700 dark:hover:bg-slate-600 dark:text-slate-100 text-xs font-semibold transition-all">
+            <lucide-icon name="download" class="w-4 h-4"></lucide-icon>
+            <span>Baixar HTML</span>
+          </button>
+
+          <button 
+            type="button" 
+            (click)="triggerPrint()"
+            class="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs transition-all hover:scale-[1.01] active:scale-[0.99]">
+            <lucide-icon name="printer" class="w-4 h-4"></lucide-icon>
+            <span>Imprimir / Salvar PDF</span>
+          </button>
+        }
+      </div>
+
+    </div>
+  </div>
+}
