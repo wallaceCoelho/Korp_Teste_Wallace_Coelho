@@ -31,7 +31,7 @@ internal sealed class ProductConfiguration : IEntityTypeConfiguration<Product>
 
         builder.Property(p => p.Description)
             .IsRequired(false)
-            .HasMaxLength(500);
+            .HasColumnType("text");
 
         builder.Property(p => p.StockQuantity)
             .IsRequired();
