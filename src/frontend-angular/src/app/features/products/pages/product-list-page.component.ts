@@ -251,7 +251,7 @@ export class ProductListPageComponent implements OnInit, OnDestroy {
         this.closeModal();
         this.notificationService.success(
           "Produto Criado",
-          `O produto "${dto.description || dto.name}" foi criado com sucesso.`,
+          `O produto "${dto.name}" foi criado com sucesso.`,
         );
         this.refreshList();
       },
