@@ -18,6 +18,12 @@ builder.Services.AddCors(options =>
     });
 });
 
+builder.Services.ConfigureHttpJsonOptions(options =>
+{
+    options.SerializerOptions.TypeInfoResolverChain.Insert(0, GatewayJsonContext.Default);
+    options.SerializerOptions.TypeInfoResolverChain.Insert(0, ApiGatewayJsonSerializerContext.Default);
+});
+
 var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? "TesteMicroservicos.AuthServer";
 var jwtAudience = builder.Configuration["Jwt:Audience"] ?? "TesteMicroservicos.Clients";
 var jwtSecretKey = builder.Configuration["Jwt:SecretKey"] ?? "SuperSecretKeyForJwtAuthenticationInApiGatewaySystem2026!";
@@ -88,6 +94,7 @@ app.MapReverseProxy();
 app.Run();
 
 [JsonSerializable(typeof(GatewayHealthResponse))]
+[JsonSerializable(typeof(Microsoft.AspNetCore.Mvc.ProblemDetails))]
 internal partial class GatewayJsonContext : JsonSerializerContext;
 
 internal record GatewayHealthResponse(string Status, string Engine, DateTime Timestamp);
