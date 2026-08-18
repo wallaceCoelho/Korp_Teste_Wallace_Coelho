@@ -8,7 +8,7 @@ using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateSlimBuilder(args);
 
-builder.Services.AddCors(options =>
+builder.Services.AddCors("AllowAll", options =>
 {
     options.AddDefaultPolicy(policy =>
     {
@@ -65,7 +65,8 @@ builder.Services.AddOpenApi();
 var app = builder.Build();
 
 app.UseExceptionHandler();
-app.UseCors();
+app.UseRouting();
+app.UseCors("AllowAll");
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseRateLimiter();
