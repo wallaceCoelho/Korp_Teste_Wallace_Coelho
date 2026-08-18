@@ -8,9 +8,9 @@ using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateSlimBuilder(args);
 
-builder.Services.AddCors("AllowAll", options =>
+builder.Services.AddCors(options =>
 {
-    options.AddDefaultPolicy(policy =>
+    options.AddPolicy("AllowAll", policy =>
     {
         policy.AllowAnyOrigin()
               .AllowAnyHeader()
