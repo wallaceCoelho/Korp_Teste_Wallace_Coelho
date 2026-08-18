@@ -60,11 +60,20 @@ export class CustomSelectComponent implements ControlValueAccessor {
   @Input() allowClear: boolean = true;
   @Input() clearValue: any = undefined;
 
+  @Input() 
+  set value(val: any) {
+    this._value = val;
+    this.cdr.markForCheck();
+  }
+  get value(): any {
+    return this._value;
+  }
+  private _value: any = null;
+
   @Output() valueChange = new EventEmitter<any>();
 
   isOpen = false;
   searchQuery = '';
-  value: any = null;
 
   private onChange: (value: any) => void = () => {};
   private onTouched: () => void = () => {};
@@ -80,15 +89,15 @@ export class CustomSelectComponent implements ControlValueAccessor {
   }
 
   get selectedOption(): SelectOption | undefined {
-    return this.options?.find(o => String(o.value) === String(this.value));
+    return this.options?.find(o => String(o.value) === String(this._value));
   }
 
   get canClear(): boolean {
-    if (this.value === null || this.value === undefined || this.value === '') {
+    if (this._value === null || this._value === undefined || this._value === '') {
       return false;
     }
     // Se o valor selecionado for 'ALL', também não precisa do botão de limpar (já é o padrão)
-    if (this.value === 'ALL') {
+    if (this._value === 'ALL') {
       return false;
     }
     return true;
@@ -118,11 +127,11 @@ export class CustomSelectComponent implements ControlValueAccessor {
   selectOption(opt: SelectOption, event?: Event) {
     if (event) event.stopPropagation();
     if (opt.disabled) return;
-    this.value = opt.value;
+    this._value = opt.value;
     this.isOpen = false;
-    this.onChange(this.value);
+    this.onChange(this._value);
     this.onTouched();
-    this.valueChange.emit(this.value);
+    this.valueChange.emit(this._value);
     this.cdr.markForCheck();
   }
 
@@ -137,37 +146,20 @@ export class CustomSelectComponent implements ControlValueAccessor {
       resetVal = hasAllOption ? 'ALL' : '';
     }
 
-    this.value = resetVal;
-    this.onChange(this.value);
+    this._value = resetVal;
+    this.onChange(this._value);
     this.onTouched();
-    this.valueChange.emit(this.value);
+    this.valueChange.emit(this._value);
     this.cdr.markForCheck();
   }
 
   isSelected(opt: SelectOption): boolean {
-    return String(this.value) === String(opt.value);
+    return String(opt.value) === String(this._value);
   }
 
-  @HostListener('document:click', ['$event'])
-  onClickOutside(event: MouseEvent) {
-    if (this.isOpen && !this.elementRef.nativeElement.contains(event.target)) {
-      this.isOpen = false;
-      this.onTouched();
-      this.cdr.markForCheck();
-    }
-  }
-
-  @HostListener('document:keydown.escape')
-  onEscape() {
-    if (this.isOpen) {
-      this.isOpen = false;
-      this.cdr.markForCheck();
-    }
-  }
-
-  // ControlValueAccessor Implementation
+  // ControlValueAccessor implementation
   writeValue(value: any): void {
-    this.value = value;
+    this._value = value;
     this.cdr.markForCheck();
   }
 
@@ -182,5 +174,15 @@ export class CustomSelectComponent implements ControlValueAccessor {
   setDisabledState(isDisabled: boolean): void {
     this.disabled = isDisabled;
     this.cdr.markForCheck();
+  }
+
+  // Fecha o dropdown se clicar fora do componente
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent) {
+    if (this.isOpen && !this.elementRef.nativeElement.contains(event.target)) {
+      this.isOpen = false;
+      this.onTouched();
+      this.cdr.markForCheck();
+    }
   }
 }

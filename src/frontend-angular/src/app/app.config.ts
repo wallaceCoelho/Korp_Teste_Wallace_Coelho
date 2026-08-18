@@ -38,7 +38,10 @@ import {
   Ban,
   Eye,
   ArrowDownCircle,
-  ArrowUpCircle
+  ArrowUpCircle,
+  Sparkles,
+  Wand2,
+  Bot
 } from 'lucide-angular';
 
 import { routes } from './app.routes';
@@ -86,7 +89,10 @@ export const appConfig: ApplicationConfig = {
         Ban,
         Eye,
         ArrowDownCircle,
-        ArrowUpCircle
+        ArrowUpCircle,
+        Sparkles,
+        Wand2,
+        Bot
       })
     )
   ]

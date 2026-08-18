@@ -1,36 +1,49 @@
-import { Component, OnInit, OnDestroy, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { LucideAngularModule } from 'lucide-angular';
-import { Subject, Subscription, catchError, debounceTime, of, startWith, switchMap, tap } from 'rxjs';
+import { Component, OnInit, OnDestroy, inject } from "@angular/core";
+import { CommonModule } from "@angular/common";
+import { FormControl, ReactiveFormsModule } from "@angular/forms";
+import { LucideAngularModule } from "lucide-angular";
+import {
+  Subject,
+  Subscription,
+  catchError,
+  debounceTime,
+  of,
+  startWith,
+  switchMap,
+  tap,
+} from "rxjs";
 
-import { CategoryFeatureService } from '../services/category-feature.service';
-import { Category, CreateCategoryDto, UpdateCategoryDto } from '../models/category.models';
-import { CategoryTableComponent } from '../components/category-table.component';
-import { CategoryFormDialogComponent } from '../components/category-form-dialog.component';
-import { PaginationComponent } from '../../../shared/ui/pagination/pagination.component';
-import { ConfirmDialogComponent } from '../../../shared/ui/confirm-dialog/confirm-dialog.component';
-import { NotificationService } from '../../../core/services/notification.service';
+import { CategoryFeatureService } from "../services/category-feature.service";
+import {
+  Category,
+  CreateCategoryDto,
+  UpdateCategoryDto,
+} from "../models/category.models";
+import { CategoryTableComponent } from "../components/category-table.component";
+import { CategoryFormDialogComponent } from "../components/category-form-dialog.component";
+import { PaginationComponent } from "../../../shared/ui/pagination/pagination.component";
+import { ConfirmDialogComponent } from "../../../shared/ui/confirm-dialog/confirm-dialog.component";
+import { NotificationService } from "../../../core/services/notification.service";
 
 @Component({
-  selector: 'app-category-list-page',
+  selector: "app-category-list-page",
   standalone: true,
   imports: [
-    CommonModule, 
-    ReactiveFormsModule, 
+    CommonModule,
+    ReactiveFormsModule,
     LucideAngularModule,
-    CategoryTableComponent, 
+    CategoryTableComponent,
     CategoryFormDialogComponent,
     PaginationComponent,
-    ConfirmDialogComponent
+    ConfirmDialogComponent,
   ],
-  templateUrl: './category-list-page.component.html'
+  templateUrl: "./category-list-page.component.html",
 })
 export class CategoryListPageComponent implements OnInit, OnDestroy {
   private categoryService = inject(CategoryFeatureService);
   private notificationService = inject(NotificationService);
 
-  searchControl = new FormControl('');
+  searchControl = new FormControl("");
   categories: Category[] = [];
   isLoading = false;
 
@@ -41,7 +54,6 @@ export class CategoryListPageComponent implements OnInit, OnDestroy {
   selectedCategory: Category | null = null;
   isSubmitting = false;
 
-  // Confirmation Modal State
   isConfirmDeleteOpen = false;
   categoryToDelete: Category | null = null;
   isDeleting = false;
@@ -55,40 +67,52 @@ export class CategoryListPageComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    const searchSub = this.searchControl.valueChanges.pipe(
-      startWith(''),
-      debounceTime(300),
-      tap(() => {
-        this.isLoading = true;
-        this.currentPage = 1;
-      }),
-      switchMap(searchTerm =>
-        this.categoryService.getCategories(searchTerm || '').pipe(
-          catchError(err => {
-            this.notificationService.handleHttpError(err, 'Erro ao carregar categorias');
-            return of({ items: [], totalCount: 0 });
-          })
-        )
+    const searchSub = this.searchControl.valueChanges
+      .pipe(
+        startWith(""),
+        debounceTime(300),
+        tap(() => {
+          this.isLoading = true;
+          this.currentPage = 1;
+        }),
+        switchMap((searchTerm) =>
+          this.categoryService.getCategories(searchTerm || "").pipe(
+            catchError((err) => {
+              this.notificationService.handleHttpError(
+                err,
+                "Erro ao carregar categorias",
+              );
+              return of({ items: [], totalCount: 0 });
+            }),
+          ),
+        ),
       )
-    ).subscribe((res: any) => {
-      this.categories = Array.isArray(res) ? res : (res?.items || []);
-      this.isLoading = false;
-    });
+      .subscribe((res: any) => {
+        this.categories = Array.isArray(res) ? res : res?.items || [];
+        this.isLoading = false;
+      });
 
-    const refreshSub = this.refresh$.pipe(
-      tap(() => this.isLoading = true),
-      switchMap(() =>
-        this.categoryService.getCategories(this.searchControl.value || '').pipe(
-          catchError(err => {
-            this.notificationService.handleHttpError(err, 'Erro ao carregar categorias');
-            return of({ items: [], totalCount: 0 });
-          })
-        )
+    const refreshSub = this.refresh$
+      .pipe(
+        tap(() => (this.isLoading = true)),
+        switchMap(() =>
+          this.categoryService
+            .getCategories(this.searchControl.value || "")
+            .pipe(
+              catchError((err) => {
+                this.notificationService.handleHttpError(
+                  err,
+                  "Erro ao carregar categorias",
+                );
+                return of({ items: [], totalCount: 0 });
+              }),
+            ),
+        ),
       )
-    ).subscribe((res: any) => {
-      this.categories = Array.isArray(res) ? res : (res?.items || []);
-      this.isLoading = false;
-    });
+      .subscribe((res: any) => {
+        this.categories = Array.isArray(res) ? res : res?.items || [];
+        this.isLoading = false;
+      });
 
     this.sub.add(searchSub);
     this.sub.add(refreshSub);
@@ -123,13 +147,19 @@ export class CategoryListPageComponent implements OnInit, OnDestroy {
       next: () => {
         this.isSubmitting = false;
         this.closeModal();
-        this.notificationService.success('Categoria Cadastrada', `A categoria "${dto.name}" foi criada com sucesso.`);
+        this.notificationService.success(
+          "Categoria Cadastrada",
+          `A categoria "${dto.name}" foi criada com sucesso.`,
+        );
         this.refreshList();
       },
       error: (err) => {
         this.isSubmitting = false;
-        this.notificationService.handleHttpError(err, 'Erro ao cadastrar categoria');
-      }
+        this.notificationService.handleHttpError(
+          err,
+          "Erro ao cadastrar categoria",
+        );
+      },
     });
   }
 
@@ -139,19 +169,25 @@ export class CategoryListPageComponent implements OnInit, OnDestroy {
       next: () => {
         this.isSubmitting = false;
         this.closeModal();
-        this.notificationService.success('Categoria Atualizada', `A categoria foi atualizada com sucesso.`);
+        this.notificationService.success(
+          "Categoria Atualizada",
+          `A categoria foi atualizada com sucesso.`,
+        );
         this.refreshList();
       },
       error: (err) => {
         this.isSubmitting = false;
-        this.notificationService.handleHttpError(err, 'Erro ao atualizar categoria');
-      }
+        this.notificationService.handleHttpError(
+          err,
+          "Erro ao atualizar categoria",
+        );
+      },
     });
   }
 
   onDeleteCategory(id: string) {
-    const cat = this.categories.find(c => c.id === id);
-    this.categoryToDelete = cat || { id, name: 'esta categoria' } as Category;
+    const cat = this.categories.find((c) => c.id === id);
+    this.categoryToDelete = cat || ({ id, name: "esta categoria" } as Category);
     this.isConfirmDeleteOpen = true;
   }
 
@@ -165,13 +201,19 @@ export class CategoryListPageComponent implements OnInit, OnDestroy {
         this.isDeleting = false;
         this.isConfirmDeleteOpen = false;
         this.categoryToDelete = null;
-        this.notificationService.success('Categoria Excluída', `A categoria "${catName}" foi removida com sucesso.`);
+        this.notificationService.success(
+          "Categoria Excluída",
+          `A categoria "${catName}" foi removida com sucesso.`,
+        );
         this.refreshList();
       },
       error: (err) => {
         this.isDeleting = false;
-        this.notificationService.handleHttpError(err, 'Erro ao excluir categoria');
-      }
+        this.notificationService.handleHttpError(
+          err,
+          "Erro ao excluir categoria",
+        );
+      },
     });
   }
 

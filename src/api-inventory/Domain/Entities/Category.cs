@@ -1,4 +1,4 @@
-﻿using Domain.Common;
+using Domain.Common;
 
 namespace Domain.Entities;
 
@@ -41,9 +41,6 @@ public sealed class Category
 
     public DomainResult CanDelete()
     {
-        if (_products.Count > 0)
-            return "Não é possível excluir uma categoria que possui produtos associados.";
-
         return DomainResult.Success();
     }
 }

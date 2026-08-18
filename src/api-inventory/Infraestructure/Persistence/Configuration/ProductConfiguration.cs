@@ -59,7 +59,7 @@ internal sealed class ProductConfiguration : IEntityTypeConfiguration<Product>
         builder.HasOne(p => p.Category)
             .WithMany(c => c.Products)
             .HasForeignKey(p => p.CategoryId)
-            .OnDelete(DeleteBehavior.Restrict);
+            .OnDelete(DeleteBehavior.SetNull);
 
         builder.HasGeneratedTsVectorColumn(
             p => p.SearchVector,

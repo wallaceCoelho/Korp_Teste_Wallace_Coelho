@@ -1,41 +1,60 @@
-import { Component, OnInit, OnDestroy, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { LucideAngularModule } from 'lucide-angular';
-import { Subject, Subscription, catchError, debounceTime, of, startWith, switchMap, tap, combineLatest } from 'rxjs';
+import { Component, OnInit, OnDestroy, inject } from "@angular/core";
+import { CommonModule } from "@angular/common";
+import { FormControl, ReactiveFormsModule } from "@angular/forms";
+import { LucideAngularModule } from "lucide-angular";
+import {
+  Subject,
+  Subscription,
+  catchError,
+  debounceTime,
+  of,
+  startWith,
+  switchMap,
+  tap,
+  combineLatest,
+} from "rxjs";
 
-import { ProductFeatureService } from '../services/product-feature.service';
-import { Product, CreateProductDto, UpdateProductDto, ProductCategoryOption, StockOperationType } from '../models/product.models';
-import { ProductTableComponent } from '../components/product-table.component';
-import { ProductFormDialogComponent } from '../components/product-form-dialog.component';
-import { StockEntryDialogComponent } from '../components/stock-entry-dialog.component';
-import { PaginationComponent } from '../../../shared/ui/pagination/pagination.component';
-import { ConfirmDialogComponent } from '../../../shared/ui/confirm-dialog/confirm-dialog.component';
-import { CustomSelectComponent, SelectOption } from '../../../shared/ui/custom-select/custom-select.component';
-import { NotificationService } from '../../../core/services/notification.service';
+import { ProductFeatureService } from "../services/product-feature.service";
+import {
+  Product,
+  CreateProductDto,
+  UpdateProductDto,
+  ProductCategoryOption,
+  StockOperationType,
+} from "../models/product.models";
+import { ProductTableComponent } from "../components/product-table.component";
+import { ProductFormDialogComponent } from "../components/product-form-dialog.component";
+import { StockEntryDialogComponent } from "../components/stock-entry-dialog.component";
+import { PaginationComponent } from "../../../shared/ui/pagination/pagination.component";
+import { ConfirmDialogComponent } from "../../../shared/ui/confirm-dialog/confirm-dialog.component";
+import {
+  CustomSelectComponent,
+  SelectOption,
+} from "../../../shared/ui/custom-select/custom-select.component";
+import { NotificationService } from "../../../core/services/notification.service";
 
 @Component({
-  selector: 'app-product-list-page',
+  selector: "app-product-list-page",
   standalone: true,
   imports: [
-    CommonModule, 
-    ReactiveFormsModule, 
+    CommonModule,
+    ReactiveFormsModule,
     LucideAngularModule,
-    ProductTableComponent, 
+    ProductTableComponent,
     ProductFormDialogComponent,
     StockEntryDialogComponent,
     PaginationComponent,
     ConfirmDialogComponent,
-    CustomSelectComponent
+    CustomSelectComponent,
   ],
-  templateUrl: './product-list-page.component.html'
+  templateUrl: "./product-list-page.component.html",
 })
 export class ProductListPageComponent implements OnInit, OnDestroy {
   private productService = inject(ProductFeatureService);
   private notificationService = inject(NotificationService);
 
-  searchControl = new FormControl('');
-  categoryFilterControl = new FormControl('ALL');
+  searchControl = new FormControl("");
+  categoryFilterControl = new FormControl("ALL");
 
   products: Product[] = [];
   filteredProducts: Product[] = [];
@@ -69,8 +88,8 @@ export class ProductListPageComponent implements OnInit, OnDestroy {
 
   get categoryOptions(): SelectOption[] {
     return [
-      { label: 'Todas as Categorias', value: 'ALL' },
-      ...this.categories.map(c => ({ label: c.name, value: c.id }))
+      { label: "Todas as Categorias", value: "ALL" },
+      ...this.categories.map((c) => ({ label: c.name, value: c.id })),
     ];
   }
 
@@ -78,45 +97,59 @@ export class ProductListPageComponent implements OnInit, OnDestroy {
     this.loadCategories();
 
     const searchSub = combineLatest([
-      this.searchControl.valueChanges.pipe(startWith(''), debounceTime(300)),
-      this.categoryFilterControl.valueChanges.pipe(startWith('ALL'))
-    ]).pipe(
-      tap(() => {
-        this.isLoading = true;
-        this.currentPage = 1;
-      }),
-      switchMap(([searchTerm, categoryId]) =>
-        this.productService.getProducts(searchTerm || '', categoryId || 'ALL').pipe(
-          catchError(err => {
-            this.notificationService.handleHttpError(err, 'Erro ao carregar produtos');
-            return of({ items: [], totalCount: 0 });
-          })
-        )
+      this.searchControl.valueChanges.pipe(startWith(""), debounceTime(300)),
+      this.categoryFilterControl.valueChanges.pipe(startWith("ALL")),
+    ])
+      .pipe(
+        tap(() => {
+          this.isLoading = true;
+          this.currentPage = 1;
+        }),
+        switchMap(([searchTerm, categoryId]) =>
+          this.productService
+            .getProducts(searchTerm || "", categoryId || "ALL")
+            .pipe(
+              catchError((err) => {
+                this.notificationService.handleHttpError(
+                  err,
+                  "Erro ao carregar produtos",
+                );
+                return of({ items: [], totalCount: 0 });
+              }),
+            ),
+        ),
       )
-    ).subscribe((res: any) => {
-      this.products = Array.isArray(res) ? res : (res?.items || []);
-      this.applyCategoryFilter();
-      this.isLoading = false;
-    });
+      .subscribe((res: any) => {
+        this.products = Array.isArray(res) ? res : res?.items || [];
+        this.applyCategoryFilter();
+        this.isLoading = false;
+      });
 
-    const refreshSub = this.refresh$.pipe(
-      tap(() => this.isLoading = true),
-      switchMap(() =>
-        this.productService.getProducts(
-          this.searchControl.value || '', 
-          this.categoryFilterControl.value || 'ALL'
-        ).pipe(
-          catchError(err => {
-            this.notificationService.handleHttpError(err, 'Erro ao carregar produtos');
-            return of({ items: [], totalCount: 0 });
-          })
-        )
+    const refreshSub = this.refresh$
+      .pipe(
+        tap(() => (this.isLoading = true)),
+        switchMap(() =>
+          this.productService
+            .getProducts(
+              this.searchControl.value || "",
+              this.categoryFilterControl.value || "ALL",
+            )
+            .pipe(
+              catchError((err) => {
+                this.notificationService.handleHttpError(
+                  err,
+                  "Erro ao carregar produtos",
+                );
+                return of({ items: [], totalCount: 0 });
+              }),
+            ),
+        ),
       )
-    ).subscribe((res: any) => {
-      this.products = Array.isArray(res) ? res : (res?.items || []);
-      this.applyCategoryFilter();
-      this.isLoading = false;
-    });
+      .subscribe((res: any) => {
+        this.products = Array.isArray(res) ? res : res?.items || [];
+        this.applyCategoryFilter();
+        this.isLoading = false;
+      });
 
     this.sub.add(searchSub);
     this.sub.add(refreshSub);
@@ -125,7 +158,7 @@ export class ProductListPageComponent implements OnInit, OnDestroy {
   loadCategories() {
     this.productService.getCategories().subscribe({
       next: (cats: any) => {
-        this.categories = Array.isArray(cats) ? cats : (cats?.items || []);
+        this.categories = Array.isArray(cats) ? cats : cats?.items || [];
       },
       error: () => (this.categories = []),
     });
@@ -133,11 +166,11 @@ export class ProductListPageComponent implements OnInit, OnDestroy {
 
   applyCategoryFilter() {
     const catId = this.categoryFilterControl.value;
-    if (!catId || catId === 'ALL') {
+    if (!catId || catId === "ALL") {
       this.filteredProducts = [...this.products];
     } else {
       this.filteredProducts = this.products.filter(
-        p => p.categoryId === catId || p.category?.id === catId
+        (p) => p.categoryId === catId || p.category?.id === catId,
       );
     }
   }
@@ -181,23 +214,33 @@ export class ProductListPageComponent implements OnInit, OnDestroy {
     this.productForStockEntry = null;
   }
 
-  onConfirmStockEntry(event: { productId: string; quantity: number; operation: StockOperationType }) {
+  onConfirmStockEntry(event: {
+    productId: string;
+    quantity: number;
+    operation: StockOperationType;
+  }) {
     this.isStockSubmitting = true;
-    this.productService.updateStock(event.productId, event.quantity, event.operation).subscribe({
-      next: () => {
-        this.isStockSubmitting = false;
-        this.closeStockEntryModal();
-        const actionLabel = event.operation === StockOperationType.Add
-          ? `Entrada de ${event.quantity} unidades realizada com sucesso!` 
-          : `Saída/Ajuste de ${event.quantity} unidades realizado com sucesso!`;
-        this.notificationService.success('Estoque Atualizado', actionLabel);
-        this.refreshList();
-      },
-      error: (err) => {
-        this.isStockSubmitting = false;
-        this.notificationService.handleHttpError(err, 'Erro ao movimentar estoque');
-      }
-    });
+    this.productService
+      .updateStock(event.productId, event.quantity, event.operation)
+      .subscribe({
+        next: () => {
+          this.isStockSubmitting = false;
+          this.closeStockEntryModal();
+          const actionLabel =
+            event.operation === StockOperationType.Add
+              ? `Entrada de ${event.quantity} unidades realizada com sucesso!`
+              : `Saída/Ajuste de ${event.quantity} unidades realizado com sucesso!`;
+          this.notificationService.success("Estoque Atualizado", actionLabel);
+          this.refreshList();
+        },
+        error: (err) => {
+          this.isStockSubmitting = false;
+          this.notificationService.handleHttpError(
+            err,
+            "Erro ao movimentar estoque",
+          );
+        },
+      });
   }
 
   onCreateProduct(dto: CreateProductDto) {
@@ -206,52 +249,81 @@ export class ProductListPageComponent implements OnInit, OnDestroy {
       next: () => {
         this.isSubmitting = false;
         this.closeModal();
-        this.notificationService.success('Produto Criado', `O produto "${dto.description || dto.name}" foi criado com sucesso.`);
+        this.notificationService.success(
+          "Produto Criado",
+          `O produto "${dto.description || dto.name}" foi criado com sucesso.`,
+        );
         this.refreshList();
       },
       error: (err) => {
         this.isSubmitting = false;
-        this.notificationService.handleHttpError(err, 'Erro ao cadastrar produto');
-      }
+        this.notificationService.handleHttpError(
+          err,
+          "Erro ao cadastrar produto",
+        );
+      },
     });
   }
 
-  onUpdateProduct(payload: { id: string; dto: UpdateProductDto; additionalStock?: number }) {
+  onUpdateProduct(payload: {
+    id: string;
+    dto: UpdateProductDto;
+    additionalStock?: number;
+  }) {
     this.isSubmitting = true;
     this.productService.updateProduct(payload.id, payload.dto).subscribe({
       next: () => {
         if (payload.additionalStock && payload.additionalStock > 0) {
-          this.productService.updateStock(payload.id, payload.additionalStock, StockOperationType.Add).subscribe({
-            next: () => {
-              this.isSubmitting = false;
-              this.closeModal();
-              this.notificationService.success('Produto & Estoque Atualizados', `Produto atualizado e entrada de ${payload.additionalStock} un realizada.`);
-              this.refreshList();
-            },
-            error: (err) => {
-              this.isSubmitting = false;
-              this.closeModal();
-              this.notificationService.handleHttpError(err, 'Produto atualizado, mas ocorreu erro na entrada de estoque');
-              this.refreshList();
-            }
-          });
+          this.productService
+            .updateStock(
+              payload.id,
+              payload.additionalStock,
+              StockOperationType.Add,
+            )
+            .subscribe({
+              next: () => {
+                this.isSubmitting = false;
+                this.closeModal();
+                this.notificationService.success(
+                  "Produto & Estoque Atualizados",
+                  `Produto atualizado e entrada de ${payload.additionalStock} un realizada.`,
+                );
+                this.refreshList();
+              },
+              error: (err) => {
+                this.isSubmitting = false;
+                this.closeModal();
+                this.notificationService.handleHttpError(
+                  err,
+                  "Produto atualizado, mas ocorreu erro na entrada de estoque",
+                );
+                this.refreshList();
+              },
+            });
         } else {
           this.isSubmitting = false;
           this.closeModal();
-          this.notificationService.success('Produto Atualizado', `O produto foi atualizado com sucesso.`);
+          this.notificationService.success(
+            "Produto Atualizado",
+            `O produto foi atualizado com sucesso.`,
+          );
           this.refreshList();
         }
       },
       error: (err) => {
         this.isSubmitting = false;
-        this.notificationService.handleHttpError(err, 'Erro ao atualizar produto');
-      }
+        this.notificationService.handleHttpError(
+          err,
+          "Erro ao atualizar produto",
+        );
+      },
     });
   }
 
   onDeleteProduct(id: string) {
-    const prod = this.products.find(p => p.id === id);
-    this.productToDelete = prod || { id, code: 'N/A', description: 'este produto' } as Product;
+    const prod = this.products.find((p) => p.id === id);
+    this.productToDelete =
+      prod || ({ id, code: "N/A", name: "este produto" } as Product);
     this.isConfirmDeleteOpen = true;
   }
 
@@ -259,19 +331,25 @@ export class ProductListPageComponent implements OnInit, OnDestroy {
     if (!this.productToDelete) return;
 
     this.isDeleting = true;
-    const prodDesc = this.productToDelete.description;
+    const prodDesc = this.productToDelete.name;
     this.productService.deleteProduct(this.productToDelete.id).subscribe({
       next: () => {
         this.isDeleting = false;
         this.isConfirmDeleteOpen = false;
         this.productToDelete = null;
-        this.notificationService.success('Produto Excluído', `O produto "${prodDesc}" foi removido do catálogo.`);
+        this.notificationService.success(
+          "Produto Excluído",
+          `O produto "${prodDesc}" foi removido do catálogo.`,
+        );
         this.refreshList();
       },
       error: (err) => {
         this.isDeleting = false;
-        this.notificationService.handleHttpError(err, 'Erro ao excluir produto');
-      }
+        this.notificationService.handleHttpError(
+          err,
+          "Erro ao excluir produto",
+        );
+      },
     });
   }
 

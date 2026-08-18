@@ -103,8 +103,8 @@
   <app-confirm-dialog
     [isOpen]="isConfirmDeleteOpen"
     title="Excluir Produto"
-    [message]="'Deseja realmente excluir o produto \'' + (productToDelete?.code || '') + ' - ' + (productToDelete?.description || '') + '\'?'"
-    detailMessage="Esta ação removerá o produto do catálogo e cancelará o histórico direto de estoque vinculado."
+    [message]="'Deseja realmente excluir o produto \'' + (productToDelete?.code || '') + ' - ' + (productToDelete?.name || '') + '\'?'"
+    [detailMessage]="'Esta ação removerá o produto do catálogo e cancelará o histórico direto de estoque vinculado. Se existir NF\'s abertas vinculadas a este produto, esta ação será interceptada e impedida.'"
     confirmText="Excluir Produto"
     cancelText="Cancelar"
     variant="danger"

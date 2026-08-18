@@ -202,10 +202,15 @@ public sealed class Product
         if (DeletedAt.HasValue)
             return "Não é possível atualizar um produto excluído.";
 
-        if (newCategoryId == null || newCategoryId == Guid.Empty)
-            return "ID de categoria inválido.";
+        CategoryId = (newCategoryId == null || newCategoryId == Guid.Empty) ? null : newCategoryId;
+        UpdatedAt = DateTime.UtcNow;
 
-        CategoryId = newCategoryId;
+        return DomainResult.Success();
+    }
+
+    public DomainResult RemoveCategory()
+    {
+        CategoryId = null;
         UpdatedAt = DateTime.UtcNow;
 
         return DomainResult.Success();

@@ -359,31 +359,51 @@ public class ProductTests
 
     [Theory]
     [InlineData(null)]
-    public void ChangeCategory_WithNullGuid_ShouldReturnFailure(Guid? nullId)
+    public void ChangeCategory_WithNullGuid_ShouldDisassociateCategory(Guid? nullId)
     {
         // Arrange
         var product = ProductFaker.GenerateValid();
+        product.ChangeCategory(Guid.NewGuid());
 
         // Act
         var result = product.ChangeCategory(nullId);
 
         // Assert
-        result.IsSuccess.ShouldBeFalse();
-        result.Error.ShouldBe("ID de categoria inválido.");
+        result.IsSuccess.ShouldBeTrue();
+        product.CategoryId.ShouldBeNull();
+        product.UpdatedAt.ShouldNotBeNull();
     }
 
     [Fact]
-    public void ChangeCategory_WithEmptyGuid_ShouldReturnFailure()
+    public void ChangeCategory_WithEmptyGuid_ShouldDisassociateCategory()
     {
         // Arrange
         var product = ProductFaker.GenerateValid();
+        product.ChangeCategory(Guid.NewGuid());
 
         // Act
         var result = product.ChangeCategory(Guid.Empty);
 
         // Assert
-        result.IsSuccess.ShouldBeFalse();
-        result.Error.ShouldBe("ID de categoria inválido.");
+        result.IsSuccess.ShouldBeTrue();
+        product.CategoryId.ShouldBeNull();
+        product.UpdatedAt.ShouldNotBeNull();
+    }
+
+    [Fact]
+    public void RemoveCategory_ShouldSetCategoryIdToNull()
+    {
+        // Arrange
+        var product = ProductFaker.GenerateValid();
+        product.ChangeCategory(Guid.NewGuid());
+
+        // Act
+        var result = product.RemoveCategory();
+
+        // Assert
+        result.IsSuccess.ShouldBeTrue();
+        product.CategoryId.ShouldBeNull();
+        product.UpdatedAt.ShouldNotBeNull();
     }
 
     [Fact]

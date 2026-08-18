@@ -97,6 +97,32 @@ services:
       aspire-dashboard:
         condition: service_started
 
+  # AI API Microservice (.NET 10 Minimal API)
+  api-ai:
+    build:
+      context: ./src/api-ai
+      dockerfile: Dockerfile
+    container_name: api-ai
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - AiSettings__Provider=${AI_PROVIDER:-Mock}
+      - AiSettings__ModelId=${AI_MODEL_ID:-mock-ai-v1}
+      - AiSettings__ApiKey=${AI_API_KEY:-}
+      - AiSettings__Endpoint=${AI_ENDPOINT:-}
+      - AiSettings__TimeoutSeconds=${AI_TIMEOUT_SECONDS:-30}
+      - AiSettings__DefaultTemperature=${AI_DEFAULT_TEMPERATURE:-0.7}
+      - AiSettings__DailyQuotaLimit=${AI_DAILY_LIMIT:-15}
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://aspire-dashboard:18889
+      - OTEL_SERVICE_NAME=api-ai
+    ports:
+      - "5053:8080"
+    depends_on:
+      aspire-dashboard:
+        condition: service_started
+
   # =========================================================================
   # 5. API Gateway (.NET 10 YARP Reverse Proxy)
   # =========================================================================
@@ -106,10 +132,13 @@ services:
       dockerfile: Dockerfile
     container_name: api-gateway
     restart: unless-stopped
+    env_file:
+      - .env
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
       - ReverseProxy__Clusters__products-cluster__Destinations__destination1__Address=http://api-inventory:8080
       - ReverseProxy__Clusters__invoices-cluster__Destinations__destination1__Address=http://api-invoicing:8080
+      - ReverseProxy__Clusters__ai-cluster__Destinations__destination1__Address=http://api-ai:8080
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://aspire-dashboard:18889
       - OTEL_SERVICE_NAME=api-gateway
     ports:
@@ -117,6 +146,7 @@ services:
     depends_on:
       - api-inventory
       - api-invoicing
+      - api-ai
       - aspire-dashboard
 
   # =========================================================================
