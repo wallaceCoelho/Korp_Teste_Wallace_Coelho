@@ -4,11 +4,18 @@ import { RouterOutlet } from '@angular/router';
 import { LucideAngularModule } from 'lucide-angular';
 import { SidebarComponent } from './sidebar/sidebar.component';
 import { ToastContainerComponent } from '../../shared/ui/toast/toast-container.component';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-layout',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, SidebarComponent, ToastContainerComponent, LucideAngularModule],
+  imports: [
+    CommonModule, 
+    RouterOutlet, 
+    SidebarComponent, 
+    ToastContainerComponent, 
+    LucideAngularModule
+  ],
   templateUrl: './app-layout.component.html'
 })
 export class AppLayoutComponent {
@@ -41,5 +48,10 @@ export class AppLayoutComponent {
 
   toggleTheme() {
     this.isDarkMode.update(val => !val);
+  }
+
+  openMonitor() {
+    const url = environment.monitorUrl || 'http://localhost:18888';
+    window.open(url, '_blank', 'noopener,noreferrer');
   }
 }

@@ -28,8 +28,22 @@
         </h1>
       </div>
 
-      <!-- Header Right Actions: Dark/Light Mode Toggle -->
+      <!-- Header Right Actions: Aspire Monitor & Dark/Light Mode Toggle -->
       <div class="flex items-center gap-2 shrink-0">
+        <!-- Aspire Dashboard Monitor Button -->
+        <button 
+          type="button" 
+          (click)="openMonitor()"
+          title="Abrir Dashboard de Telemetria e Monitoramento (.NET Aspire)"
+          class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-amber-200 bg-amber-50/80 hover:bg-amber-100 text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/40 dark:hover:bg-amber-900/60 dark:text-amber-300 transition-all text-xs font-semibold shadow-sm hover:scale-[1.01] active:scale-[0.99]">
+          <lucide-icon name="server" class="w-4 h-4 text-amber-600 dark:text-amber-400"></lucide-icon>
+          <span class="hidden xs:inline sm:inline">Monitor</span>
+          <span class="px-1.5 py-0.2 rounded text-[10px] font-bold bg-amber-200/70 text-amber-900 dark:bg-amber-900 dark:text-amber-200 uppercase tracking-wider">
+            Aspire
+          </span>
+        </button>
+
+        <!-- Theme Toggle Button -->
         <button 
           type="button" 
           (click)="toggleTheme()"

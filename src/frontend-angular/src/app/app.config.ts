@@ -41,7 +41,12 @@ import {
   ArrowUpCircle,
   Sparkles,
   Wand2,
-  Bot
+  Bot,
+  BookOpen,
+  FileCode,
+  ExternalLink,
+  Code,
+  Server
 } from 'lucide-angular';
 
 import { routes } from './app.routes';
@@ -92,7 +97,12 @@ export const appConfig: ApplicationConfig = {
         ArrowUpCircle,
         Sparkles,
         Wand2,
-        Bot
+        Bot,
+        BookOpen,
+        FileCode,
+        ExternalLink,
+        Code,
+        Server
       })
     )
   ]

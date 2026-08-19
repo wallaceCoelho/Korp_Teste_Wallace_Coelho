@@ -31,14 +31,36 @@ if (fs.existsSync(envFileToRead)) {
 }
 
 const isProd = targetEnv === 'production';
-const apiUrl = envVars.API_URL || (isProd ? 'http://localhost:5050/api' : 'http://localhost:5050/api');
+const rootEnvPath = path.resolve(rootDir, '..', '.env');
+if (fs.existsSync(rootEnvPath)) {
+  const rootContent = fs.readFileSync(rootEnvPath, 'utf-8');
+  rootContent.split('\n').forEach(line => {
+    const trimmed = line.trim();
+    if (trimmed && !trimmed.startsWith('#')) {
+      const idx = trimmed.indexOf('=');
+      if (idx > -1) {
+        const key = trimmed.substring(0, idx).trim();
+        const value = trimmed.substring(idx + 1).trim().replace(/^['"]|['"]$/g, '');
+        if (!envVars[key]) {
+          envVars[key] = value;
+        }
+      }
+    }
+  });
+}
+
+const apiUrl = envVars.API_URL || (isProd ? 'https://korpapi.wcoelho.com.br/api' : 'http://localhost:5050/api');
+const monitorUrl = envVars.MONITOR_URL || (isProd ? 'https://korpmonitor.wcoelho.com.br' : 'http://localhost:18888');
 
 const envConfigFile = `// Arquivo gerado automaticamente pelo script set-env.js
 export const environment = {
   production: ${isProd},
   apiUrl: (typeof window !== 'undefined' && (window as any).env?.API_URL)
     ? (window as any).env.API_URL
-    : '${apiUrl}'
+    : '${apiUrl}',
+  monitorUrl: (typeof window !== 'undefined' && (window as any).env?.MONITOR_URL)
+    ? (window as any).env.MONITOR_URL
+    : '${monitorUrl}'
 };
 `;
 
